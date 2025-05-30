@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  email       String?   @unique
+  password    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  playlists   Playlist[]
+  blogPosts   BlogPost[]
+  refreshTokens RefreshToken[]
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
+  emailVerified Boolean @default(false)
+  emailVerificationToken String?
+  userTenants UserTenant[]
+  currentTenantId Int?
+  currentTenant Tenant? @relation("CurrentTenant", fields: [currentTenantId], references: [id])
+}
+
+model Playlist {
+  id          Int      @id @default(autoincrement())
+  name        String
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  songs       PlaylistSong[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Song {
+  id          Int      @id @default(autoincrement())
+  title       String
+  artist      String
+  url         String
+  albumId     Int
+  album       Album    @relation(fields: [albumId], references: [id], name: "AlbumSongs")
+  duration    String
+  genre       String   @default("Rock")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  playlists   PlaylistSong[]
+}
+
+model PlaylistSong {
+  id          Int      @id @default(autoincrement())
+  playlistId  Int
+  songId      Int
+  playlist    Playlist @relation(fields: [playlistId], references: [id])
+  song        Song     @relation(fields: [songId], references: [id])
+}
+
+model BlogPost {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Album {
+  id          Int      @id @default(autoincrement())
+  title       String
+  artist      String
+  image_url   String?
+  year        String?
+  track_count String?
+  duration    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  songs       Song[]   @relation("AlbumSongs")
+}
+
+model RefreshToken {
+  id          Int      @id @default(autoincrement())
+  token       String   @unique
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  revoked     Boolean  @default(false)
+}
+
+model Tenant {
+  id   Int    @id @default(autoincrement())
+  name String
+  userTenants UserTenant[]
+  usersWithCurrentTenant User[] @relation("CurrentTenant")
+}
+
+model UserTenant {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  tenantId  Int
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role      String @default("member")
+}

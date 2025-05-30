@@ -1,0 +1,51 @@
+import React from 'react';
+import { Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+
+// TODO: Implement album card functionality using MySQL/Prisma and local file storage. Supabase logic removed.
+
+const getAlbumImageUrl = (image_url: string | null | undefined) => {
+  if (!image_url) return '/placeholder.svg';
+  // If the image_url is an absolute URL (http/https), use as is
+  if (/^https?:\/\//i.test(image_url)) return image_url;
+  // Otherwise, treat as relative and prefix with backend uploads URL
+  return `http://localhost:4000/uploads/${image_url.replace(/^\/+|\\/g, '/')}`;
+};
+
+const AlbumCard: React.FC<{ album: any; onPlay?: (album: any) => void }> = ({ album, onPlay }) => {
+  const imageUrl = getAlbumImageUrl(album.image_url);
+  return (
+    <Link to={`/album/${album.id}`} className="block group">
+      <div className="bg-background rounded-lg shadow-md p-4 flex flex-col items-center group hover:shadow-lg transition-all w-full max-w-[240px]">
+        <div className="relative w-full aspect-square mb-3">
+          <img
+            src={imageUrl}
+            alt={album.title}
+            className="w-full h-full object-cover rounded-md"
+            onError={e => (e.currentTarget.src = '/placeholder.svg')}
+          />
+          <Button
+            variant="default"
+            size="icon"
+            className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onPlay) onPlay(album);
+            }}
+            aria-label={`Play ${album.title}`}
+          >
+            <Play className="w-5 h-5" />
+          </Button>
+        </div>
+        <div className="w-full text-center">
+          <h3 className="font-semibold text-base truncate">{album.title}</h3>
+          <p className="text-sm text-muted-foreground truncate">{album.artist}</p>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+export default AlbumCard;
