@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { AlbumFormValues } from '../schemas/albumFormSchema';
@@ -42,12 +41,11 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
 }) => {
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 text-xs">
         <ImageUpload 
           imagePreview={imagePreview} 
           handleFileChange={handleFileChange} 
         />
-        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <FormField
             control={form.control}
@@ -56,13 +54,12 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
               <FormItem className="space-y-1">
                 <FormLabel className="text-xs">Title</FormLabel>
                 <FormControl>
-                  <Input placeholder="Album title" {...field} className="h-7 text-sm" />
+                  <Input placeholder="Album title" {...field} className="h-7 text-xs" />
                 </FormControl>
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
-          
           <FormField
             control={form.control}
             name="artist"
@@ -70,14 +67,13 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
               <FormItem className="space-y-1">
                 <FormLabel className="text-xs">Artist</FormLabel>
                 <FormControl>
-                  <Input placeholder="Artist name" {...field} className="h-7 text-sm" />
+                  <Input placeholder="Artist name" {...field} className="h-7 text-xs" />
                 </FormControl>
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
         </div>
-        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <FormField
             control={form.control}
@@ -90,7 +86,7 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-7 text-sm">
+                    <SelectTrigger className="h-7 text-xs">
                       <SelectValue placeholder="Select genre" />
                     </SelectTrigger>
                   </FormControl>
@@ -108,7 +104,6 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
               </FormItem>
             )}
           />
-          
           <FormField
             control={form.control}
             name="year"
@@ -116,14 +111,13 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
               <FormItem className="space-y-1">
                 <FormLabel className="text-xs">Year</FormLabel>
                 <FormControl>
-                  <Input placeholder="Release year" {...field} className="h-7 text-sm" />
+                  <Input placeholder="Release year" {...field} className="h-7 text-xs" />
                 </FormControl>
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
         </div>
-        
         <FormField
           control={form.control}
           name="comments"
@@ -131,9 +125,9 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
             <FormItem className="space-y-1">
               <FormLabel className="text-xs">Comments</FormLabel>
               <FormControl>
-                <Textarea 
+                <Input 
                   placeholder="Additional notes about this album"
-                  className="resize-none h-14 text-sm"
+                  className="h-7 text-xs"
                   {...field}
                 />
               </FormControl>
@@ -141,14 +135,14 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
             </FormItem>
           )}
         />
-        
-        <DialogFooter className="pt-1">
+        <DialogFooter className="pt-1 gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={onCancel}
             disabled={isUploading}
             size="sm"
+            className="text-xs"
           >
             Cancel
           </Button>
@@ -156,6 +150,7 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
             type="submit" 
             disabled={isUploading}
             size="sm"
+            className="text-xs"
           >
             {isUploading ? "Uploading..." : "Add Album"}
           </Button>

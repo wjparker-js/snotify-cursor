@@ -1,4 +1,5 @@
-const prisma = require('../integrations/mysql');
+const { PrismaClient: PrismaClient2 } = require('@prisma/client');
+const prisma = new PrismaClient2();
 
 // Fetch all albums from MySQL using Prisma
 async function getAlbums() {

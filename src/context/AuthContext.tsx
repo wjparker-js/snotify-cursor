@@ -1,9 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 interface AuthUser {
   id: number;
   email: string;
+  name: string | null;
+  avatar: string | null;
+  bio: string | null;
+  preferences: any;
+  emailVerified: boolean;
 }
 
 interface AuthContextType {
@@ -13,6 +18,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => void;
   resetPassword: (email: string) => Promise<void>;
+  updateProfile: (data: Partial<AuthUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -82,6 +88,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Promise.resolve();
   };
 
+  const updateProfile = async (data: Partial<AuthUser>) => {
+    // Implementation of updateProfile method
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -91,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         signOut,
         resetPassword,
+        updateProfile,
       }}
     >
       {children}

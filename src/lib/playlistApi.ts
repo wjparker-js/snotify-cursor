@@ -1,13 +1,33 @@
-const prisma = require('../integrations/mysql');
+import prisma from '../integrations/mysql';
 
 // TODO: Implement playlist CRUD using Prisma. These are stubs for future implementation.
 
 async function getPlaylists() {
-  throw new Error('Playlist fetching is not implemented. Replace with Prisma logic.');
+  return await prisma.playlist.findMany({
+    include: {
+      user: true,
+      playlistsong: {
+        include: {
+          song: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 }
 
 async function getPlaylistById(playlistId) {
-  throw new Error('Playlist fetching by ID is not implemented. Replace with Prisma logic.');
+  return await prisma.playlist.findUnique({
+    where: { id: Number(playlistId) },
+    include: {
+      user: true,
+      playlistsong: {
+        include: {
+          song: true,
+        },
+      },
+    },
+  });
 }
 
 async function createPlaylist(/* playlistData */) {
@@ -22,4 +42,11 @@ async function deletePlaylist(/* playlistId */) {
   throw new Error('Playlist deletion is not implemented. Replace with Prisma logic.');
 }
 
-module.exports = { getPlaylists, getPlaylistById, createPlaylist, updatePlaylist, deletePlaylist }; 
+async function setPlaylistCoverBlob(playlistId, buffer) {
+  return await prisma.playlist.update({
+    where: { id: Number(playlistId) },
+    data: { cover_blob: buffer },
+  });
+}
+
+module.exports = { getPlaylists, getPlaylistById, createPlaylist, updatePlaylist, deletePlaylist, setPlaylistCoverBlob }; 

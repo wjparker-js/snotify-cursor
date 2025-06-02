@@ -109,7 +109,7 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto py-4">
+      <DialogContent className="w-[400px] h-[530px] overflow-hidden py-6 px-6 text-xs">
         <DialogHeader className="py-1">
           <DialogTitle className="text-base">Add New Album</DialogTitle>
           <DialogDescription className="text-xs">

@@ -1,9 +1,8 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import Album from "./pages/Album";
@@ -23,6 +22,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ToastProvider } from "@/hooks/use-toast.tsx";
+import AlbumDetailsPage from './pages/albums/[id]';
 
 // Create a new query client
 const queryClient = new QueryClient({
@@ -37,6 +37,7 @@ const queryClient = new QueryClient({
 const App = () => {
   const [selectedTab, setSelectedTab] = useState('Albums');
   const isMobileView = useIsMobile(700);
+  const location = useLocation();
   
   // Always force dark mode
   useEffect(() => {
@@ -49,42 +50,42 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <ThemeProvider>
-            <ToastProvider>
-              <TooltipProvider>
-                <SidebarProvider defaultOpen={!isMobileView}>
-                  <div className="flex flex-col h-screen overflow-hidden bg-black text-foreground w-full">
-                    <TopBar />
-                    <div className="flex flex-grow relative">
-                      <Sidebar />
-                      <div className="flex flex-col flex-grow w-full">
-                        <div className="flex-grow overflow-y-auto bg-black">
-                          <Routes>
-                            <Route path="/" element={<Index />} />
-                            <Route path="/album/:id" element={<Album />} />
-                            <Route path="/playlists" element={<Playlists />} />
-                            <Route path="/playlist/:id" element={<Playlist />} />
-                            <Route path="/blog" element={<Blog />} />
-                            <Route path="/blog/:id" element={<BlogPost />} />
-                            <Route path="/settings" element={<Settings />} />
-                            <Route path="/reset-password" element={<ResetPassword />} />
-                            <Route path="*" element={<NotFound />} />
-                          </Routes>
-                        </div>
-                        <Player />
+      <AuthProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <TooltipProvider>
+              <SidebarProvider defaultOpen={!isMobileView}>
+                <div className="flex flex-col h-screen overflow-hidden bg-black text-foreground w-full">
+                  <TopBar />
+                  <div className="flex flex-1 min-h-0">
+                    <Sidebar />
+                    <div className="flex flex-col flex-1 w-full min-h-0">
+                      <div className="flex-grow overflow-y-auto bg-black">
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/albums" element={<Index />} />
+                          <Route path="/album/:id" element={<Album />} />
+                          <Route path="/albums/:id" element={<AlbumDetailsPage />} />
+                          <Route path="/playlists" element={<Playlists />} />
+                          <Route path="/playlist/:id" element={<Playlist />} />
+                          <Route path="/blog" element={<Blog />} />
+                          <Route path="/blog/:id" element={<BlogPost />} />
+                          <Route path="/settings" element={<Settings />} />
+                          <Route path="/reset-password" element={<ResetPassword />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
                       </div>
+                      {(location.pathname.match(/^\/albums\/[\w-]+$/) || location.pathname.match(/^\/playlist\/[\w-]+$/)) && <Player />}
                     </div>
                   </div>
                   <Toaster />
                   <Sonner />
-                </SidebarProvider>
-              </TooltipProvider>
-            </ToastProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </BrowserRouter>
+                </div>
+              </SidebarProvider>
+            </TooltipProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

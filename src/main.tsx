@@ -1,15 +1,19 @@
-
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { useHideAddressBar } from './hooks/use-hide-address-bar'
+import { BrowserRouter } from 'react-router-dom';
 
 // Wrapper component to apply the hooks
 const AppWithHooks = () => {
   // Apply address bar hiding hook
   useHideAddressBar();
   
-  return <App />;
+  return (
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  );
 };
 
 // Root element to render into

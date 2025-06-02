@@ -1,6 +1,7 @@
 const express = require('express');
-const authRoutes = require('./authRoutes');
+// const authRoutes = require('./authRoutes');
 const albumRoutes = require('./albumRoutes');
+const playlistRoutes = require('./playlistRoutes');
 const multer = require('multer');
 const path = require('path');
 require('dotenv').config();
@@ -15,8 +16,9 @@ app.use(express.json());
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.resolve(UPLOADS_BASE_PATH)));
 
-app.use('/api/auth', authRoutes);
+// app.use('/api/auth', authRoutes);
 app.use('/api/albums', albumRoutes);
+app.use('/api/playlists', playlistRoutes);
 
 app.get('/api/auth/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Auth server is running' });

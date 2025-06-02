@@ -100,23 +100,44 @@ export async function verifyEmail(token) {
 export async function getUserProfile(userId) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, emailVerified: true, createdAt: true, updatedAt: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      avatar: true,
+      bio: true,
+      preferences: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true
+    },
   });
   if (!user) throw new Error('User not found');
   return user;
 }
 
 export async function updateUserProfile(userId, data) {
-  const allowedFields = ['email']; // Add more fields as needed
+  const allowedFields = ['email', 'name', 'avatar', 'bio', 'preferences'];
   const updateData = {};
   for (const key of allowedFields) {
     if (data[key] !== undefined) updateData[key] = data[key];
   }
   if (Object.keys(updateData).length === 0) throw new Error('No valid fields to update');
+  
   const user = await prisma.user.update({
     where: { id: userId },
     data: updateData,
-    select: { id: true, email: true, emailVerified: true, createdAt: true, updatedAt: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      avatar: true,
+      bio: true,
+      preferences: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true
+    },
   });
   return user;
 }

@@ -1,0 +1,35 @@
+:root {
+  --color-bg: #18181b;
+  --color-bg-secondary: #232326;
+  --color-card: #222226;
+  --color-text: #f3f3f3;
+  --color-muted: #b0b0b0;
+  --color-highlight: #ff8800;
+  --radius: 0.75rem;
+  --transition: 0.15s cubic-bezier(0.4,0,0.2,1);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.bg-card {
+  background: var(--color-card);
+}
+
+.rounded-xl {
+  border-radius: var(--radius);
+}
+
+.text-highlight {
+  color: var(--color-highlight);
+}
+
+.bg-highlight {
+  background: var(--color-highlight);
+}
+
+.transition {
+  transition: all var(--transition);
+} 
