@@ -14,7 +14,6 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import Sidebar from "./components/sidebar/Sidebar";
-import Player from "./components/player/Player";
 import TopBar from "./components/navigation/TopBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "./hooks/use-mobile";
@@ -23,6 +22,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ToastProvider } from "@/hooks/use-toast.tsx";
 import AlbumDetailsPage from './pages/albums/[id]';
+import { MediaPlayerProvider } from '@/contexts/MediaPlayerContext';
+import MediaPlayer from '@/components/player/MediaPlayer';
 
 // Create a new query client
 const queryClient = new QueryClient({
@@ -50,42 +51,44 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <ToastProvider>
-            <TooltipProvider>
-              <SidebarProvider defaultOpen={!isMobileView}>
-                <div className="flex flex-col h-screen overflow-hidden bg-black text-foreground w-full">
-                  <TopBar />
-                  <div className="flex flex-1 min-h-0">
-                    <Sidebar />
-                    <div className="flex flex-col flex-1 w-full min-h-0">
-                      <div className="flex-grow overflow-y-auto bg-black">
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/albums" element={<Index />} />
-                          <Route path="/album/:id" element={<Album />} />
-                          <Route path="/albums/:id" element={<AlbumDetailsPage />} />
-                          <Route path="/playlists" element={<Playlists />} />
-                          <Route path="/playlist/:id" element={<Playlist />} />
-                          <Route path="/blog" element={<Blog />} />
-                          <Route path="/blog/:id" element={<BlogPost />} />
-                          <Route path="/settings" element={<Settings />} />
-                          <Route path="/reset-password" element={<ResetPassword />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
+      <MediaPlayerProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <TooltipProvider>
+                <SidebarProvider defaultOpen={!isMobileView}>
+                  <div className="flex flex-col h-screen overflow-hidden bg-black text-foreground w-full">
+                    <TopBar />
+                    <div className="flex flex-1 min-h-0">
+                      <Sidebar />
+                      <div className="flex flex-col flex-1 w-full min-h-0">
+                        <div className="flex-grow overflow-y-auto bg-black">
+                          <Routes>
+                            <Route path="/" element={<Index />} />
+                            <Route path="/albums" element={<Index />} />
+                            <Route path="/album/:id" element={<Album />} />
+                            <Route path="/albums/:id" element={<AlbumDetailsPage />} />
+                            <Route path="/playlists" element={<Playlists />} />
+                            <Route path="/playlist/:id" element={<Playlist />} />
+                            <Route path="/blog" element={<Blog />} />
+                            <Route path="/blog/:id" element={<BlogPost />} />
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </div>
+                        <MediaPlayer />
                       </div>
-                      {(location.pathname.match(/^\/albums\/[\w-]+$/) || location.pathname.match(/^\/playlist\/[\w-]+$/)) && <Player />}
                     </div>
+                    <Toaster />
+                    <Sonner />
                   </div>
-                  <Toaster />
-                  <Sonner />
-                </div>
-              </SidebarProvider>
-            </TooltipProvider>
-          </ToastProvider>
-        </ThemeProvider>
-      </AuthProvider>
+                </SidebarProvider>
+              </TooltipProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </MediaPlayerProvider>
     </QueryClientProvider>
   );
 };

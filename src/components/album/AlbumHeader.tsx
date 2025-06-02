@@ -14,6 +14,7 @@ interface AlbumHeaderProps {
   year: string;
   trackCount: string;
   duration: string;
+  actions?: React.ReactNode;
 }
 const AlbumHeader: React.FC<AlbumHeaderProps> = ({
   image,
@@ -21,15 +22,17 @@ const AlbumHeader: React.FC<AlbumHeaderProps> = ({
   artist,
   year,
   trackCount,
-  duration
+  duration,
+  actions
 }) => {
   const isMobile = useIsMobile(768);
   const imageUrl = getAlbumImageUrl(image);
 
-  return <div className="bg-gradient-to-b from-zinc-700/40 to-spotify-background p-2 md:p-3 w-full px-0">
+  return <div className="bg-gradient-to-b from-zinc-700/40 to-spotify-background p-2 md:p-3 w-full px-0 relative">
       {isMobile ?
     // Mobile layout - everything centered properly with reduced height
     <div className="w-full flex flex-col items-center text-center">
+          {actions && <div className="w-full flex justify-end mb-2">{actions}</div>}
           <h1 className="text-xl sm:text-2xl font-bold mb-1">{title}</h1>
           {/* Center the album art properly with reduced dimensions */}
           <div className="flex justify-center w-full mb-1">
@@ -57,7 +60,7 @@ const AlbumHeader: React.FC<AlbumHeaderProps> = ({
           </div>
         </div> :
     // Desktop layout - horizontal alignment with reduced height
-    <div className="flex items-center gap-3 py-[10px] px-[10px]">
+    <div className="flex items-center gap-3 py-[10px] px-[10px] relative">
           <div className="flex justify-center items-center" style={{ width: 145, height: 145 }}>
             <img src={imageUrl} alt={title} className="shadow-xl object-cover rounded-md" style={{ width: 145, height: 145, maxWidth: '100%', maxHeight: '100%' }} />
           </div>
@@ -81,6 +84,7 @@ const AlbumHeader: React.FC<AlbumHeaderProps> = ({
                 </>}
             </div>
           </div>
+          {actions && <div className="absolute top-0 right-0 flex gap-2">{actions}</div>}
         </div>}
     </div>;
 };

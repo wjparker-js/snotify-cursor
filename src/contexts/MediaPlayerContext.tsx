@@ -105,43 +105,23 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   }, [isPlaying]);
 
   const playTrack = (track: Track, newPlaylist?: Track[], source?: QueueItem['source'], sourceId?: string) => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
-
-    const audio = audioRef.current;
-    audio.src = track.audioUrl;
-    audio.volume = isMuted ? 0 : volume;
-    
-    // Update playlist if provided
-    if (newPlaylist) {
-      setPlaylist(newPlaylist);
-      setCurrentIndex(newPlaylist.findIndex(t => t.id === track.id));
-    }
-    
-    audio.play().then(() => {
+    if (!audioRef.current) return;
+    audioRef.current.src = track.audioUrl;
+    audioRef.current.volume = isMuted ? 0 : volume;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().then(() => {
       setCurrentTrack(track);
       setIsPlaying(true);
       setIsVisible(true);
-
-      // Add to queue if not already in playlist
+      if (newPlaylist) {
+        setPlaylist(newPlaylist);
+        setCurrentIndex(newPlaylist.findIndex(t => t.id === track.id));
+      }
       if (source && !playlist.some(t => t.id === track.id)) {
         addToQueue(track, source, sourceId);
       }
     }).catch(error => {
       console.error('Error playing track:', error);
-    });
-
-    // Update progress
-    audio.addEventListener('timeupdate', () => {
-      if (audio.duration) {
-        setProgress((audio.currentTime / audio.duration) * 100);
-      }
-    });
-
-    // Handle track end
-    audio.addEventListener('ended', () => {
-      playNext();
     });
   };
 
@@ -262,6 +242,32 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const handleTimeUpdate = () => {
+      if (audio.duration) {
+        setProgress((audio.currentTime / audio.duration) * 100);
+      }
+    };
+    const handleEnded = () => {
+      playNext();
+    };
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [audioRef, playNext]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+      audioRef.current.muted = isMuted;
+    }
+  }, [volume, isMuted]);
+
   const setVolume = (newVolume: number) => {
     setVolumeState(newVolume);
     if (audioRef.current) {
@@ -276,7 +282,6 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
 
   const toggleMute = () => {
     if (!audioRef.current) return;
-
     if (isMuted) {
       audioRef.current.volume = volume;
       setIsMuted(false);
@@ -288,7 +293,6 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
 
   const seekTo = (position: number) => {
     if (!audioRef.current) return;
-
     const newTime = (position / 100) * (audioRef.current.duration || 0);
     audioRef.current.currentTime = newTime;
     setProgress(position);
@@ -322,6 +326,7 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      <audio ref={audioRef} style={{ display: 'none' }} />
     </MediaPlayerContext.Provider>
   );
 }

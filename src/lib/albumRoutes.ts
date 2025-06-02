@@ -5,9 +5,9 @@ const path2 = require('path');
 const { PrismaClient } = require('@prisma/client');
 const multer2 = require('multer');
 const mm = require('music-metadata');
+require('dotenv').config();
 
-// Define the base path for uploads (project root uploads directory)
-const UPLOADS_BASE_PATH_ALBUMS = path2.join(__dirname, '../../../uploads');
+const UPLOADS_BASE_PATH = process.env.UPLOADS_BASE_PATH || 'uploads';
 
 const router = express2.Router();
 const prisma2 = new PrismaClient();
@@ -15,8 +15,8 @@ const prisma2 = new PrismaClient();
 // Multer storage config for album images
 const storage = multer2.diskStorage({
   destination: (req, file, cb) => {
-    const albumName = req.body.title || 'untitled_album';
-    const albumDir = path2.join(UPLOADS_BASE_PATH_ALBUMS, albumName);
+    const albumTitle = req.body.title || req.params.albumTitle || 'untitled_album';
+    const albumDir = path2.join(UPLOADS_BASE_PATH, albumTitle);
     fs.mkdirSync(albumDir, { recursive: true });
     cb(null, albumDir);
   },
@@ -30,15 +30,14 @@ const upload = multer2({ storage });
 // Multer storage config for track audio files
 const trackStorage = multer2.diskStorage({
   destination: (req, file, cb) => {
-    const albumId = req.params.albumId || 'unknown_album';
-    const albumDir = path2.join(UPLOADS_BASE_PATH_ALBUMS, 'albums', albumId, 'tracks');
+    // Use album title for the subfolder
+    const albumTitle = req.body.albumTitle || req.body.title || 'untitled_album';
+    const albumDir = path2.join(UPLOADS_BASE_PATH, albumTitle);
     fs.mkdirSync(albumDir, { recursive: true });
     cb(null, albumDir);
   },
   filename: (req, file, cb) => {
-    const ext = path2.extname(file.originalname);
-    const uniqueId = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueId + ext);
+    cb(null, file.originalname);
   },
 });
 const trackUpload = multer2({ storage: trackStorage });
@@ -122,12 +121,18 @@ router.post('/:albumId/tracks', trackUpload.single('audio'), async (req, res) =>
     if (!req.file || isNaN(albumId)) {
       return res.status(400).json({ error: 'Audio file and albumId are required' });
     }
-    // Derive title from file name (without extension)
-    const originalName = req.file.originalname;
-    const title = originalName.replace(/\.[^/.]+$/, "");
+    // Fetch album to get the title
+    const album = await prisma2.album.findUnique({ where: { id: albumId } });
+    if (!album) {
+      return res.status(404).json({ error: 'Album not found' });
+    }
+    const albumTitle = album.title || 'untitled_album';
+    // Use the title from the form, not the filename
+    const title = req.body.title || req.file.originalname.replace(/\.[^/.]+$/, "");
     const artist = req.body.artist || 'Unknown Artist';
-    const genre = 'Rock';
-    const audioPath = path2.relative(UPLOADS_BASE_PATH_ALBUMS, req.file.path).replace(/\\/g, '/');
+    const genre = req.body.genre || 'Rock';
+    // Store the relative path as <albumTitle>/<filename>
+    const audioPath = `${albumTitle}/${req.file.originalname}`;
     // Derive duration from audio file
     let duration = '0:00';
     try {
@@ -149,6 +154,7 @@ router.post('/:albumId/tracks', trackUpload.single('audio'), async (req, res) =>
         albumId: albumId,
         duration,
         genre,
+        updatedAt: new Date(),
       },
     });
     res.status(201).json(song);
