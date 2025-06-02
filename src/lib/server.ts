@@ -6,15 +6,15 @@ const multer = require('multer');
 const path = require('path');
 require('dotenv').config();
 
+const UPLOADS_BASE_PATH_SERVER = process.env.UPLOADS_BASE_PATH || 'uploads';
+
 const app = express();
 const PORT = 4000;
-
-const UPLOADS_BASE_PATH = process.env.UPLOADS_BASE_PATH || 'uploads';
 
 app.use(express.json());
 
 // Serve static files from the uploads directory
-app.use('/uploads', express.static(path.resolve(UPLOADS_BASE_PATH)));
+app.use('/uploads', express.static(path.resolve(UPLOADS_BASE_PATH_SERVER)));
 
 // app.use('/api/auth', authRoutes);
 app.use('/api/albums', albumRoutes);
@@ -31,5 +31,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`Auth server running on http://localhost:${PORT}/api/auth`);
-  console.log(`Uploads served from /uploads (base path: ${UPLOADS_BASE_PATH})`);
+  console.log(`Uploads served from /uploads (base path: ${UPLOADS_BASE_PATH_SERVER})`);
 }); 

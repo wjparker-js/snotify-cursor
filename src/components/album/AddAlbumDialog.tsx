@@ -26,6 +26,7 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<AlbumFormValues>({
     resolver: zodResolver(albumFormSchema),
@@ -44,6 +45,16 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
       setImageFile(file);
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      setImageFile(null);
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -76,6 +87,27 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to add album');
       }
+      const album = await response.json();
+
+      // Upload image as blob to /api/albums/:id/cover
+      try {
+        const coverFormData = new FormData();
+        coverFormData.append('cover', imageFile);
+        const coverResponse = await fetch(`/api/albums/${album.id}/cover`, {
+          method: 'POST',
+          body: coverFormData
+        });
+        if (!coverResponse.ok) {
+          const coverError = await coverResponse.json();
+          throw new Error(coverError.error || 'Failed to upload album cover blob');
+        }
+      } catch (coverError: any) {
+        toast({
+          title: "Warning",
+          description: coverError.message || "Album created but failed to upload cover blob.",
+          variant: "destructive",
+        });
+      }
 
       toast({
         title: "Success",
@@ -87,6 +119,7 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
       setImageFile(null);
       setImagePreview(null);
       setOpen(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error: any) {
       console.error("Error adding album:", error);
       toast({
@@ -100,7 +133,7 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogTrigger asChild>
         {children || (
           <Button className="gap-2" size="sm">
@@ -123,6 +156,7 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
           handleFileChange={handleFileChange}
           onSubmit={onSubmit}
           onCancel={() => setOpen(false)}
+          fileInputRef={fileInputRef}
         />
       </DialogContent>
     </Dialog>

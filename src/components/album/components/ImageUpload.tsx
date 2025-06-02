@@ -5,11 +5,10 @@ import { Upload, ImageIcon } from 'lucide-react';
 interface ImageUploadProps {
   imagePreview: string | null;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  inputRef: React.RefObject<HTMLInputElement>;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ imagePreview, handleFileChange }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
+const ImageUpload: React.FC<ImageUploadProps> = ({ imagePreview, handleFileChange, inputRef }) => {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -53,7 +52,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imagePreview, handleFileChang
           </div>
         </div>
       </div>
-      <div className="w-full md:w-1/2 flex items-center justify-center">
+      <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
+        <span className="text-xs mb-1 block text-gray-400">Preview</span>
         {imagePreview ? (
           <div className="relative w-40 h-32 overflow-hidden rounded-md border border-gray-700 bg-gray-900">
             <img

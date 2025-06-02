@@ -6,6 +6,9 @@ const { PrismaClient } = require('@prisma/client');
 const multer2 = require('multer');
 const mm = require('music-metadata');
 
+// Define the base path for uploads (project root uploads directory)
+const UPLOADS_BASE_PATH_ALBUMS = path2.join(__dirname, '../../../uploads');
+
 const router = express2.Router();
 const prisma2 = new PrismaClient();
 
@@ -13,7 +16,7 @@ const prisma2 = new PrismaClient();
 const storage = multer2.diskStorage({
   destination: (req, file, cb) => {
     const albumName = req.body.title || 'untitled_album';
-    const albumDir = path2.join(UPLOADS_BASE_PATH, albumName);
+    const albumDir = path2.join(UPLOADS_BASE_PATH_ALBUMS, albumName);
     fs.mkdirSync(albumDir, { recursive: true });
     cb(null, albumDir);
   },
@@ -28,7 +31,7 @@ const upload = multer2({ storage });
 const trackStorage = multer2.diskStorage({
   destination: (req, file, cb) => {
     const albumId = req.params.albumId || 'unknown_album';
-    const albumDir = path2.join(UPLOADS_BASE_PATH, 'albums', albumId, 'tracks');
+    const albumDir = path2.join(UPLOADS_BASE_PATH_ALBUMS, 'albums', albumId, 'tracks');
     fs.mkdirSync(albumDir, { recursive: true });
     cb(null, albumDir);
   },
@@ -124,7 +127,7 @@ router.post('/:albumId/tracks', trackUpload.single('audio'), async (req, res) =>
     const title = originalName.replace(/\.[^/.]+$/, "");
     const artist = req.body.artist || 'Unknown Artist';
     const genre = 'Rock';
-    const audioPath = path2.relative(UPLOADS_BASE_PATH, req.file.path).replace(/\\/g, '/');
+    const audioPath = path2.relative(UPLOADS_BASE_PATH_ALBUMS, req.file.path).replace(/\\/g, '/');
     // Derive duration from audio file
     let duration = '0:00';
     try {

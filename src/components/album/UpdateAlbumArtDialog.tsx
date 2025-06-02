@@ -1,6 +1,4 @@
-
-import React, { useState } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,7 +9,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FileImage } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import ImageUpload from './components/ImageUpload';
 
@@ -31,22 +28,29 @@ const UpdateAlbumArtDialog: React.FC<UpdateAlbumArtDialogProps> = ({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(currentImage);
   const { toast } = useToast();
-  
-  // Add form context with useForm hook
-  const form = useForm();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
-      
-      // Create a preview URL for the image
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const handleSubmit = async () => {
+  const handleDialogClose = (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      setImageFile(null);
+      setImagePreview(currentImage);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!imageFile) {
       toast({
         title: "Error",
@@ -55,64 +59,28 @@ const UpdateAlbumArtDialog: React.FC<UpdateAlbumArtDialogProps> = ({
       });
       return;
     }
-
     setIsUploading(true);
-
     try {
-      // Generate a unique filename for storage
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `albums/${albumId}/${fileName}`;
-      
-      console.log('Uploading file to path:', filePath);
-      
-      // Upload the image file to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('images')
-        .upload(filePath, imageFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(`Upload failed: ${uploadError.message}`);
+      const formData = new FormData();
+      formData.append('cover', imageFile);
+      const response = await fetch(`/api/albums/${albumId}/cover`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload album cover');
       }
-      
-      console.log('Upload successful:', uploadData);
-      
-      // Get the public URL for the uploaded image
-      const { data } = supabase.storage
-        .from('images')
-        .getPublicUrl(filePath);
-      
-      const publicUrl = data.publicUrl;
-      console.log('Public URL:', publicUrl);
-      
-      // Update the album with the new image URL
-      const { error: updateError } = await supabase
-        .from('albums')
-        .update({ image_url: publicUrl })
-        .eq('id', albumId);
-      
-      if (updateError) {
-        console.error('Album update error:', updateError);
-        throw new Error(`Album update failed: ${updateError.message}`);
-      }
-      
-      // Call the callback to update the UI
-      onImageUpdated(publicUrl);
-      
-      setOpen(false);
       toast({
         title: "Success",
         description: "Album art updated successfully!",
       });
-    } catch (error) {
-      console.error("Error updating album art:", error);
+      setOpen(false);
+      onImageUpdated(`${currentImage.split('?')[0]}?${Date.now()}`); // force reload
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: `Failed to update album art: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: error.message || "Failed to update album art.",
         variant: "destructive",
       });
     } finally {
@@ -121,10 +89,10 @@ const UpdateAlbumArtDialog: React.FC<UpdateAlbumArtDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-1" aria-label="Replace Album Art">
-          <FileImage size={16} /> Replace Art
+        <Button variant="outline" size="sm" className="flex items-center gap-1" aria-label="Upload/Change Cover">
+          <FileImage size={16} /> Upload/Change Cover
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
@@ -134,36 +102,29 @@ const UpdateAlbumArtDialog: React.FC<UpdateAlbumArtDialogProps> = ({
             Upload a new image for this album.
           </DialogDescription>
         </DialogHeader>
-        
-        {/* Wrap form components with FormProvider */}
-        <FormProvider {...form}>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }} className="space-y-4">
-            <ImageUpload 
-              imagePreview={imagePreview} 
-              handleFileChange={handleFileChange} 
-            />
-            
-            <div className="flex justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setOpen(false)}
-                disabled={isUploading}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isUploading || !imageFile}
-              >
-                {isUploading ? "Uploading..." : "Update Image"}
-              </Button>
-            </div>
-          </form>
-        </FormProvider>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <ImageUpload
+            imagePreview={imagePreview}
+            handleFileChange={handleFileChange}
+            inputRef={fileInputRef}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isUploading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isUploading || !imageFile}
+            >
+              {isUploading ? "Uploading..." : "Update Image"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

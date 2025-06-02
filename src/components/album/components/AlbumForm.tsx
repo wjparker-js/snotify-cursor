@@ -29,6 +29,7 @@ interface AlbumFormProps {
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (data: AlbumFormValues) => void;
   onCancel: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement>;
 }
 
 const AlbumForm: React.FC<AlbumFormProps> = ({
@@ -38,6 +39,7 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
   handleFileChange,
   onSubmit,
   onCancel,
+  fileInputRef,
 }) => {
   return (
     <Form {...form}>
@@ -45,6 +47,7 @@ const AlbumForm: React.FC<AlbumFormProps> = ({
         <ImageUpload 
           imagePreview={imagePreview} 
           handleFileChange={handleFileChange} 
+          inputRef={fileInputRef}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <FormField

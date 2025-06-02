@@ -142,6 +142,7 @@ const Album: React.FC = () => {
         trackCount={album.track_count}
         duration={album.duration}
       />
+      <button style={{zIndex: 9999, background: 'red', color: 'white'}}>TEST BUTTON</button>
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogTrigger asChild>
           <button className="bg-blue-600 text-white px-3 py-1 rounded my-4">Upload/Change Cover</button>
@@ -164,7 +165,11 @@ const Album: React.FC = () => {
       </Dialog>
       {album.id && (
         <section className="mb-4">
-          <AlbumActions albumId={album.id} albumTitle={album.title} artist={album.artist} />
+          <AlbumActions 
+            albumId={album.id} 
+            albumTitle={album.title} 
+            artist={album.artist}
+          />
         </section>
       )}
       <div className="mt-8">
