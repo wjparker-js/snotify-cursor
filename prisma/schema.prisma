@@ -84,6 +84,7 @@ model song {
   genre        String         @default("Rock")
   playlistsong playlistsong[]
   album        album          @relation(fields: [albumId], references: [id], map: "Song_albumId_fkey")
+  likedtrack   likedtrack[]
 
   @@index([albumId], map: "Song_albumId_fkey")
 }
@@ -115,6 +116,7 @@ model user {
   refreshtoken           refreshtoken[]
   tenant                 tenant?        @relation(fields: [currentTenantId], references: [id], map: "User_currentTenantId_fkey")
   usertenant             usertenant[]
+  likedtrack             likedtrack[]
 
   @@index([currentTenantId], map: "User_currentTenantId_fkey")
 }
@@ -129,4 +131,17 @@ model usertenant {
 
   @@index([tenantId], map: "UserTenant_tenantId_fkey")
   @@index([userId], map: "UserTenant_userId_fkey")
+}
+
+model likedtrack {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  songId    Int
+  createdAt DateTime @default(now())
+  user      user     @relation(fields: [userId], references: [id], map: "LikedTrack_userId_fkey")
+  song      song     @relation(fields: [songId], references: [id], map: "LikedTrack_songId_fkey")
+
+  @@unique([userId, songId], map: "LikedTrack_userId_songId_key")
+  @@index([userId], map: "LikedTrack_userId_fkey")
+  @@index([songId], map: "LikedTrack_songId_fkey")
 }
