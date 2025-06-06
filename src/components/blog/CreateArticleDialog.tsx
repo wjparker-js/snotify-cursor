@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryClient } from '@tanstack/react-query';
 import { extractYouTubeVideoId, convertYouTubeUrlsToEmbeds } from '@/utils/youtubeUtils';
-import { supabase } from '@/integrations/supabase/client';
+// TODO: Replace with actual API calls when blog functionality is implemented
 
 interface CreateArticleDialogProps {
   children: React.ReactNode;
@@ -84,8 +84,8 @@ const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
       console.log('Creating article with image URL:', imageUrl);
       console.log('Excerpt:', excerpt);
 
-      // Insert article into database
-      const { data, error } = await supabase.from('blog_articles').insert({
+      // TODO: Replace with actual API call to Express backend
+      const articleData = {
         title: values.title,
         subtitle: values.subtitle || null,
         content: processedContent,
@@ -94,12 +94,12 @@ const CreateArticleDialog: React.FC<CreateArticleDialogProps> = ({
         author: values.author || 'Anonymous',
         category: values.category,
         published_at: new Date().toISOString()
-      }).select('id').single();
+      };
       
-      if (error) {
-        console.error('Supabase insert error:', error);
-        throw error;
-      }
+      console.log('Would create article with data:', articleData);
+      
+      // Simulate success for now
+      const data = { id: Math.random().toString(36).substr(2, 9), ...articleData };
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['blog-posts'] });

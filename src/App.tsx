@@ -15,7 +15,7 @@ import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import Sidebar from "./components/sidebar/Sidebar";
 import TopBar from "./components/navigation/TopBar";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useIsMobile } from "./hooks/use-mobile";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";

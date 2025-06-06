@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, MoreHorizontal, Trash2, FileImage } from 'lucide-react';
 import AddTrackDialog from './AddTrackDialog';
-import { Track } from '@/types/supabase';
+import { Track } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui/button';

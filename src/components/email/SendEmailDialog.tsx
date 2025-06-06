@@ -23,7 +23,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Mail, Loader2 } from "lucide-react";
-import { sendEmail } from "@/utils/email";
+// import { sendEmail } from "@/utils/email"; // TODO: Implement email functionality
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/AuthContext';
 
@@ -65,16 +65,12 @@ const SendEmailDialog = () => {
         <p>${values.message.replace(/\n/g, "<br/>")}</p>
       </div>`;
 
-      await sendEmail(
-        values.to,
-        values.subject,
-        htmlContent,
-        session.access_token
-      );
+      // TODO: Implement actual email sending
+      console.log("Would send email to:", values.to, "Subject:", values.subject);
 
       toast({
-        title: "Success",
-        description: "Email sent successfully.",
+        title: "Email simulated",
+        description: "Email functionality is not yet implemented.",
       });
 
       form.reset();

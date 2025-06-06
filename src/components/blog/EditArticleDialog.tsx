@@ -4,11 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import ArticleForm from './ArticleForm';
 import { uploadImageFile } from '@/utils/fileUpload';
 import { useNavigate } from 'react-router-dom';
-import { BlogArticle } from '@/types/supabase';
+import { BlogArticle } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { Spinner } from "@/components/ui/spinner";
 import { convertYouTubeUrlsToEmbeds } from '@/utils/youtubeUtils';
-import { supabase } from '@/integrations/supabase/client';
 
 interface EditArticleDialogProps {
   children: React.ReactNode;
@@ -88,19 +87,13 @@ const EditArticleDialog: React.FC<EditArticleDialogProps> = ({
       
       console.log('Update data being sent to Supabase:', updateData);
       
-      // Update article in database using PATCH method which is more appropriate for updates
-      const { data, error } = await supabase
-        .from('blog_articles')
-        .update(updateData)
-        .eq('id', article.id)
-        .select();
+      // TODO: Replace with actual API call to Express backend
+      console.log('Would update article with data:', updateData);
+      console.log('Article ID:', article.id);
       
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-      
-      console.log('Article updated successfully, response:', data);
+      // Simulate success for now
+      const data = { id: article.id, ...updateData };
+      console.log('Article updated successfully (simulated):', data);
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['blog-posts'] });

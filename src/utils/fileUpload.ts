@@ -1,13 +1,5 @@
 // TODO: Implement file upload using local storage or another provider. Supabase logic removed.
 
-export async function uploadFile(/* params */) {
-  throw new Error('File upload is not implemented. Replace with local or alternative storage.');
-}
-
-export async function uploadAudioFile(/* params */) {
-  throw new Error('Audio file upload is not implemented. Replace with local or alternative storage.');
-}
-
 /**
  * Gets a YouTube video thumbnail URL from a video URL or ID
  */
@@ -28,7 +20,7 @@ export function getYouTubeThumbnail(urlOrId: string): string {
 }
 
 /**
- * Uploads a file to Supabase Storage
+ * Uploads an image file to storage
  * @param file File or string URL to upload
  * @param bucket Storage bucket name
  * @returns URL of the uploaded file
@@ -44,32 +36,39 @@ export async function uploadImageFile(file: File | string, bucket: string): Prom
       return file;
     }
 
-    // Continue with file upload logic for File objects
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `lovable-uploads/${fileName}`;
+    // TODO: Implement actual file upload logic
+    console.log('Would upload file:', file.name, 'to bucket:', bucket);
     
-    const { data, error } = await supabase.storage
-      .from('public')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
-    
-    if (error) {
-      console.error('Error uploading file:', error);
-      throw new Error(`Failed to upload file: ${error.message}`);
-    }
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('public')
-      .getPublicUrl(filePath);
-    
-    return publicUrl;
+    // For now, return a placeholder URL
+    return '/placeholder.svg';
   } catch (error) {
     console.error('Error in uploadImageFile:', error);
     throw error;
   }
+}
+
+/**
+ * Uploads a file to storage (general purpose)
+ * @param file File to upload
+ * @param bucket Storage bucket name
+ * @returns URL of the uploaded file
+ */
+export async function uploadFile(file: File, bucket: string): Promise<string> {
+  // TODO: Implement file upload logic
+  console.log('Would upload file:', file.name, 'to bucket:', bucket);
+  throw new Error('File upload is not implemented. Replace with local or alternative storage.');
+}
+
+/**
+ * Uploads an audio file to storage
+ * @param file File to upload
+ * @param bucket Storage bucket name
+ * @returns URL of the uploaded file
+ */
+export async function uploadAudioFile(file: File, bucket: string): Promise<string> {
+  // TODO: Implement audio file upload logic
+  console.log('Would upload audio file:', file.name, 'to bucket:', bucket);
+  throw new Error('Audio file upload is not implemented. Replace with local or alternative storage.');
 }
 
 /**
@@ -104,9 +103,7 @@ export function generateFilePath(albumId: string, fileName: string): string {
  * @returns Public URL of the file
  */
 export function getAudioUrl(filePath: string): string {
-  const { data: { publicUrl } } = supabase.storage
-    .from('public')
-    .getPublicUrl(filePath);
-  
-  return publicUrl;
+  // TODO: Implement with actual storage provider
+  console.log('Would get audio URL for path:', filePath);
+  return `/uploads/${filePath}`;
 }

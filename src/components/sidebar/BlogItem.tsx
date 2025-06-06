@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
-import { deleteBlogArticle } from '@/utils/blogUtils';
+// import { deleteBlogArticle } from '@/utils/blogUtils'; // TODO: Implement blog API
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
@@ -54,34 +54,22 @@ const BlogItem: React.FC<BlogItemProps> = ({ article, onDeleted }) => {
     });
     
     try {
-      const success = await deleteBlogArticle(
-        article.id,
-        article.image_url,
-        () => {
-          // Invalidate both queries to refresh sidebar and main blog list
-          queryClient.invalidateQueries({ queryKey: ['sidebar-blogs'] });
-          queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
-          
-          // Ensure onDeleted callback is called to refresh the sidebar list
-          if (onDeleted) {
-            console.log("Calling onDeleted callback for sidebar refresh");
-            onDeleted();
-          }
-        }
-      );
+      // TODO: Implement actual blog deletion via Express API
+      console.log("Would delete article:", article.id);
       
-      if (success) {
-        toast({
-          title: "Article deleted",
-          description: "The article has been successfully deleted"
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to delete the article",
-          variant: "destructive"
-        });
+      // Simulate success for now
+      queryClient.invalidateQueries({ queryKey: ['sidebar-blogs'] });
+      queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
+      
+      if (onDeleted) {
+        console.log("Calling onDeleted callback for sidebar refresh");
+        onDeleted();
       }
+      
+      toast({
+        title: "Article deleted (simulated)",
+        description: "Blog deletion is not yet implemented with Express API"
+      });
     } catch (error) {
       console.error("Error deleting article:", error);
       toast({
