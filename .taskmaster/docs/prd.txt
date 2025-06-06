@@ -1,0 +1,2477 @@
+# Snotify PRD - Comprehensive Product Requirements Document (Expanded)
+
+## Executive Summary
+
+**Product Name:** Snotify  
+**Version:** 1.0.0  
+**Platform:** Progressive Web Application (PWA)  
+**Target Launch:** Q2 2025  
+**Team Size:** 6-8 developers (2 frontend, 2 backend, 1 DevOps, 1 QA, 1 UI/UX, 1 PM)  
+**Budget Estimate:** $300,000 - $500,000  
+**Timeline:** 16 weeks development + 4 weeks testing/deployment  
+
+Snotify is a comprehensive music streaming platform that replicates and enhances Spotify's functionality. The platform provides users with high-fidelity audio streaming, intelligent music discovery, collaborative playlist management, and rich social features within a modern, responsive web interface.
+
+### Business Objectives
+1. **Market Penetration:** Capture 0.1% of music streaming market (50,000 users) within 6 months
+2. **User Engagement:** Average session duration of 45+ minutes
+3. **Revenue Generation:** 15% conversion rate from free to premium within 3 months
+4. **Content Library:** 10 million+ tracks at launch through licensing partnerships
+5. **Technical Excellence:** 99.9% uptime with sub-second response times
+
+## Detailed Technical Architecture
+
+### Technology Stack Specifications
+
+#### Frontend Technologies
+```json
+{
+  "framework": "Next.js 14.2.0+",
+  "react": "18.3.0+",
+  "typescript": "5.4.0+",
+  "styling": {
+    "primary": "Tailwind CSS 3.4.0+",
+    "components": "Headless UI 2.0.0+",
+    "icons": "Lucide React 0.263.1+",
+    "animations": "Framer Motion 11.0.0+"
+  },
+  "state_management": {
+    "global": "Zustand 4.5.0+",
+    "server": "TanStack Query 5.0.0+",
+    "forms": "React Hook Form 7.50.0+"
+  },
+  "audio": {
+    "streaming": "HLS.js 1.5.0+",
+    "processing": "Web Audio API (native)",
+    "visualization": "Web Audio API + Canvas",
+    "offline": "Service Worker + IndexedDB"
+  }
+}
+```
+
+#### Backend Technologies
+```json
+{
+  "runtime": "Node.js 20.11.0+ LTS",
+  "framework": "Next.js API Routes + Express.js 4.19.0+",
+  "database": {
+    "primary": "MySQL 8.0.36+",
+    "orm": "Prisma 5.10.0+",
+    "migrations": "Prisma Migrate",
+    "seeding": "Prisma Studio + Custom scripts"
+  },
+  "search": "Elasticsearch 8.12.0+",
+  "cache": "Redis 7.2.0+",
+  "storage": {
+    "files": "AWS S3 + CloudFront",
+    "sessions": "Redis",
+    "temp": "Local filesystem"
+  },
+  "realtime": "Socket.io 4.7.0+",
+  "queue": "Bull MQ 5.0.0+",
+  "monitoring": {
+    "metrics": "Prometheus 2.50.0+",
+    "visualization": "Grafana 10.4.0+",
+    "logging": "Winston 3.11.0+",
+    "errors": "Sentry 7.100.0+"
+  }
+}
+```
+
+#### Infrastructure Specifications
+```yaml
+server_requirements:
+  minimum:
+    cpu: "4 cores (Intel Xeon or AMD EPYC)"
+    ram: "16GB DDR4"
+    storage: "500GB NVMe SSD"
+    network: "1Gbps connection"
+  recommended:
+    cpu: "8 cores (Intel Xeon or AMD EPYC)"
+    ram: "32GB DDR4"
+    storage: "1TB NVMe SSD"
+    network: "10Gbps connection"
+  
+operating_system:
+  version: "Ubuntu 24.04 LTS (Noble Numbat)"
+  kernel: "6.8.0+"
+  security_updates: "Auto-enabled"
+  
+docker:
+  version: "24.0.0+"
+  compose: "2.24.0+"
+  
+nginx:
+  version: "1.24.0+"
+  modules: ["http_ssl_module", "http_v2_module", "http_gzip_module"]
+  
+mysql:
+  version: "8.0.36+"
+  configuration:
+    innodb_buffer_pool_size: "70% of available RAM"
+    max_connections: 1000
+    query_cache_size: "256MB"
+    slow_query_log: "enabled"
+    
+elasticsearch:
+  version: "8.12.0+"
+  heap_size: "4GB minimum"
+  cluster_nodes: 3
+  
+redis:
+  version: "7.2.0+"
+  memory_policy: "allkeys-lru"
+  max_memory: "2GB"
+```
+
+### Detailed Component Architecture
+
+#### Core Application Structure
+```
+src/
+├── app/                          # Next.js App Router
+│   ├── (auth)/                   # Auth route group
+│   │   ├── login/page.tsx
+│   │   ├── register/page.tsx
+│   │   └── layout.tsx
+│   ├── (dashboard)/              # Main app route group
+│   │   ├── layout.tsx            # Main app layout
+│   │   ├── page.tsx              # Home/Dashboard
+│   │   ├── search/page.tsx
+│   │   ├── library/page.tsx
+│   │   ├── playlist/[id]/page.tsx
+│   │   ├── artist/[id]/page.tsx
+│   │   ├── album/[id]/page.tsx
+│   │   └── profile/[id]/page.tsx
+│   ├── api/                      # API routes
+│   │   ├── auth/
+│   │   ├── users/
+│   │   ├── tracks/
+│   │   ├── playlists/
+│   │   ├── search/
+│   │   └── player/
+│   ├── globals.css
+│   └── layout.tsx                # Root layout
+├── components/                   # Reusable components
+│   ├── ui/                       # Base UI components
+│   │   ├── Button/
+│   │   │   ├── Button.tsx
+│   │   │   ├── Button.test.tsx
+│   │   │   ├── Button.stories.tsx
+│   │   │   └── index.ts
+│   │   ├── Input/
+│   │   ├── Modal/
+│   │   ├── Dropdown/
+│   │   └── index.ts
+│   ├── layout/                   # Layout components
+│   │   ├── Sidebar/
+│   │   ├── Header/
+│   │   ├── PlayerBar/
+│   │   └── Navigation/
+│   ├── music/                    # Music-specific components
+│   │   ├── TrackList/
+│   │   ├── AlbumCard/
+│   │   ├── ArtistCard/
+│   │   ├── PlaylistCard/
+│   │   └── AudioPlayer/
+│   └── features/                 # Feature-specific components
+│       ├── Search/
+│       ├── Library/
+│       ├── Social/
+│       └── Profile/
+├── lib/                          # Utility libraries
+│   ├── auth.ts                   # Authentication utilities
+│   ├── db.ts                     # Database connection
+│   ├── audio.ts                  # Audio processing
+│   ├── api.ts                    # API client
+│   ├── utils.ts                  # General utilities
+│   ├── constants.ts              # Application constants
+│   ├── validators.ts             # Input validation schemas
+│   └── types.ts                  # TypeScript type definitions
+├── hooks/                        # Custom React hooks
+│   ├── useAuth.ts
+│   ├── useAudio.ts
+│   ├── useDebounce.ts
+│   ├── useLocalStorage.ts
+│   └── useWebSocket.ts
+├── stores/                       # State management
+│   ├── authStore.ts              # Authentication state
+│   ├── playerStore.ts            # Audio player state
+│   ├── libraryStore.ts           # User library state
+│   ├── searchStore.ts            # Search state
+│   └── index.ts
+├── types/                        # TypeScript definitions
+│   ├── api.ts                    # API response types
+│   ├── auth.ts                   # Authentication types
+│   ├── music.ts                  # Music-related types
+│   ├── user.ts                   # User-related types
+│   └── global.d.ts               # Global type declarations
+└── styles/                       # Styling files
+    ├── globals.css               # Global styles
+    ├── components.css            # Component-specific styles
+    └── tailwind.config.js        # Tailwind configuration
+```
+
+## Comprehensive Database Schema with Indexes and Constraints
+
+### Complete Database Schema
+```sql
+-- Enable UUID functions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Users table with comprehensive fields
+CREATE TABLE users (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    email_verified BOOLEAN DEFAULT FALSE,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    display_name VARCHAR(100) NOT NULL,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    password_hash VARCHAR(255),
+    profile_image_url VARCHAR(500),
+    cover_image_url VARCHAR(500),
+    bio TEXT,
+    birth_date DATE,
+    gender ENUM('male', 'female', 'non-binary', 'prefer-not-to-say', 'other'),
+    country_code VARCHAR(2),
+    language_code VARCHAR(5) DEFAULT 'en-US',
+    premium_tier ENUM('free', 'premium', 'family', 'student') DEFAULT 'free',
+    premium_expires_at TIMESTAMP NULL,
+    followers_count INT DEFAULT 0,
+    following_count INT DEFAULT 0,
+    public_playlists_count INT DEFAULT 0,
+    total_play_time_ms BIGINT DEFAULT 0,
+    account_status ENUM('active', 'suspended', 'deactivated') DEFAULT 'active',
+    privacy_settings JSON,
+    notification_settings JSON,
+    last_login_at TIMESTAMP,
+    last_activity_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_email (email),
+    INDEX idx_username (username),
+    INDEX idx_premium_tier (premium_tier),
+    INDEX idx_country_code (country_code),
+    INDEX idx_account_status (account_status),
+    INDEX idx_created_at (created_at),
+    INDEX idx_last_activity (last_activity_at),
+    
+    CONSTRAINT chk_email_format CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+    CONSTRAINT chk_username_length CHECK (CHAR_LENGTH(username) >= 3),
+    CONSTRAINT chk_birth_date CHECK (birth_date IS NULL OR birth_date <= CURDATE())
+);
+
+-- OAuth providers table
+CREATE TABLE user_oauth_providers (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    provider ENUM('google', 'facebook', 'apple', 'spotify') NOT NULL,
+    provider_user_id VARCHAR(255) NOT NULL,
+    access_token TEXT,
+    refresh_token TEXT,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_provider_user (provider, provider_user_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_provider (provider)
+);
+
+-- Password reset tokens
+CREATE TABLE password_reset_tokens (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_token (token),
+    INDEX idx_user_id (user_id),
+    INDEX idx_expires_at (expires_at)
+);
+
+-- Artists table with detailed metadata
+CREATE TABLE artists (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(255) NOT NULL,
+    sort_name VARCHAR(255), -- For sorting (e.g., "Beatles, The")
+    image_url VARCHAR(500),
+    cover_image_url VARCHAR(500),
+    bio TEXT,
+    website_url VARCHAR(500),
+    social_links JSON, -- {twitter, instagram, facebook, etc.}
+    monthly_listeners INT DEFAULT 0,
+    total_followers INT DEFAULT 0,
+    total_plays BIGINT DEFAULT 0,
+    verified BOOLEAN DEFAULT FALSE,
+    active BOOLEAN DEFAULT TRUE,
+    country_code VARCHAR(2),
+    genres JSON, -- Array of genre IDs
+    popularity_score INT DEFAULT 0, -- 0-100
+    spotify_id VARCHAR(50),
+    musicbrainz_id VARCHAR(36),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_name (name),
+    INDEX idx_sort_name (sort_name),
+    INDEX idx_monthly_listeners (monthly_listeners),
+    INDEX idx_popularity_score (popularity_score),
+    INDEX idx_verified (verified),
+    INDEX idx_active (active),
+    INDEX idx_country_code (country_code),
+    FULLTEXT idx_search (name, bio)
+);
+
+-- Genres table
+CREATE TABLE genres (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    color_hex VARCHAR(7), -- For UI theming
+    parent_genre_id VARCHAR(36),
+    popularity_score INT DEFAULT 0,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (parent_genre_id) REFERENCES genres(id) ON DELETE SET NULL,
+    INDEX idx_name (name),
+    INDEX idx_slug (slug),
+    INDEX idx_parent_genre (parent_genre_id),
+    INDEX idx_popularity (popularity_score)
+);
+
+-- Albums table with comprehensive metadata
+CREATE TABLE albums (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    sort_title VARCHAR(255),
+    artist_id VARCHAR(36) NOT NULL,
+    cover_image_url VARCHAR(500),
+    background_color VARCHAR(7), -- Extracted from cover art
+    description TEXT,
+    release_date DATE,
+    release_date_precision ENUM('year', 'month', 'day') DEFAULT 'day',
+    total_tracks INT DEFAULT 0,
+    total_duration_ms BIGINT DEFAULT 0,
+    album_type ENUM('album', 'single', 'ep', 'compilation') DEFAULT 'album',
+    label VARCHAR(255),
+    copyright_text TEXT,
+    producer VARCHAR(255),
+    genres JSON,
+    popularity_score INT DEFAULT 0,
+    total_plays BIGINT DEFAULT 0,
+    available_markets JSON, -- Array of country codes
+    explicit BOOLEAN DEFAULT FALSE,
+    spotify_id VARCHAR(50),
+    musicbrainz_id VARCHAR(36),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
+    INDEX idx_title (title),
+    INDEX idx_sort_title (sort_title),
+    INDEX idx_artist_id (artist_id),
+    INDEX idx_release_date (release_date),
+    INDEX idx_album_type (album_type),
+    INDEX idx_popularity_score (popularity_score),
+    INDEX idx_active (active),
+    FULLTEXT idx_search (title, description)
+);
+
+-- Tracks table with comprehensive audio metadata
+CREATE TABLE tracks (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    sort_title VARCHAR(255),
+    artist_id VARCHAR(36) NOT NULL,
+    album_id VARCHAR(36),
+    duration_ms INT NOT NULL,
+    audio_url VARCHAR(500) NOT NULL,
+    preview_url VARCHAR(500),
+    hls_url VARCHAR(500), -- HLS streaming URL
+    waveform_url VARCHAR(500), -- Waveform data URL
+    track_number INT,
+    disc_number INT DEFAULT 1,
+    explicit BOOLEAN DEFAULT FALSE,
+    popularity_score INT DEFAULT 0,
+    energy DECIMAL(3,2), -- 0.0-1.0 audio feature
+    danceability DECIMAL(3,2), -- 0.0-1.0 audio feature
+    valence DECIMAL(3,2), -- 0.0-1.0 audio feature (positivity)
+    acousticness DECIMAL(3,2), -- 0.0-1.0 audio feature
+    instrumentalness DECIMAL(3,2), -- 0.0-1.0 audio feature
+    liveness DECIMAL(3,2), -- 0.0-1.0 audio feature
+    speechiness DECIMAL(3,2), -- 0.0-1.0 audio feature
+    tempo DECIMAL(6,3), -- BPM
+    key_signature INT, -- 0-11 (C, C#, D, etc.)
+    mode INT, -- 0 (minor) or 1 (major)
+    time_signature INT, -- 3, 4, 5, etc.
+    loudness DECIMAL(6,3), -- dB
+    genres JSON,
+    lyrics TEXT,
+    isrc VARCHAR(12), -- International Standard Recording Code
+    total_plays BIGINT DEFAULT 0,
+    total_likes INT DEFAULT 0,
+    available_markets JSON,
+    spotify_id VARCHAR(50),
+    musicbrainz_id VARCHAR(36),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
+    FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE SET NULL,
+    INDEX idx_title (title),
+    INDEX idx_sort_title (sort_title),
+    INDEX idx_artist_id (artist_id),
+    INDEX idx_album_id (album_id),
+    INDEX idx_popularity_score (popularity_score),
+    INDEX idx_duration_ms (duration_ms),
+    INDEX idx_energy (energy),
+    INDEX idx_danceability (danceability),
+    INDEX idx_valence (valence),
+    INDEX idx_tempo (tempo),
+    INDEX idx_active (active),
+    FULLTEXT idx_search (title, lyrics),
+    
+    CONSTRAINT chk_duration_positive CHECK (duration_ms > 0),
+    CONSTRAINT chk_track_number_positive CHECK (track_number IS NULL OR track_number > 0),
+    CONSTRAINT chk_audio_features CHECK (
+        (energy IS NULL OR (energy >= 0 AND energy <= 1)) AND
+        (danceability IS NULL OR (danceability >= 0 AND danceability <= 1)) AND
+        (valence IS NULL OR (valence >= 0 AND valence <= 1))
+    )
+);
+
+-- Track collaborations (featuring artists, etc.)
+CREATE TABLE track_artists (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    track_id VARCHAR(36) NOT NULL,
+    artist_id VARCHAR(36) NOT NULL,
+    role ENUM('primary', 'featured', 'remix', 'producer', 'writer') DEFAULT 'primary',
+    order_index INT DEFAULT 0,
+    
+    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_track_artist_role (track_id, artist_id, role),
+    INDEX idx_track_id (track_id),
+    INDEX idx_artist_id (artist_id),
+    INDEX idx_role (role)
+);
+
+-- Playlists table with comprehensive features
+CREATE TABLE playlists (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    owner_id VARCHAR(36) NOT NULL,
+    cover_image_url VARCHAR(500),
+    background_color VARCHAR(7),
+    public BOOLEAN DEFAULT FALSE,
+    collaborative BOOLEAN DEFAULT FALSE,
+    followers_count INT DEFAULT 0,
+    total_tracks INT DEFAULT 0,
+    total_duration_ms BIGINT DEFAULT 0,
+    tags JSON, -- Array of tags for categorization
+    mood VARCHAR(50), -- happy, sad, energetic, chill, etc.
+    activity VARCHAR(50), -- workout, study, party, sleep, etc.
+    featured BOOLEAN DEFAULT FALSE, -- For editorial playlists
+    spotify_id VARCHAR(50),
+    last_modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_name (name),
+    INDEX idx_owner_id (owner_id),
+    INDEX idx_public (public),
+    INDEX idx_collaborative (collaborative),
+    INDEX idx_featured (featured),
+    INDEX idx_mood (mood),
+    INDEX idx_activity (activity),
+    INDEX idx_followers_count (followers_count),
+    INDEX idx_last_modified (last_modified_at),
+    FULLTEXT idx_search (name, description)
+);
+
+-- Playlist tracks junction table with detailed metadata
+CREATE TABLE playlist_tracks (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    playlist_id VARCHAR(36) NOT NULL,
+    track_id VARCHAR(36) NOT NULL,
+    position INT NOT NULL,
+    added_by_user_id VARCHAR(36) NOT NULL,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    note TEXT, -- Personal note about why this track was added
+    
+    FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
+    FOREIGN KEY (added_by_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_playlist_position (playlist_id, position),
+    INDEX idx_playlist_id (playlist_id),
+    INDEX idx_track_id (track_id),
+    INDEX idx_added_by (added_by_user_id),
+    INDEX idx_added_at (added_at)
+);
+
+-- User follows (both users and artists)
+CREATE TABLE user_follows (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    follower_id VARCHAR(36) NOT NULL,
+    following_id VARCHAR(36), -- User ID if following a user
+    artist_id VARCHAR(36), -- Artist ID if following an artist
+    playlist_id VARCHAR(36), -- Playlist ID if following a playlist
+    follow_type ENUM('user', 'artist', 'playlist') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
+    FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+    
+    UNIQUE KEY unique_user_follow (follower_id, following_id),
+    UNIQUE KEY unique_artist_follow (follower_id, artist_id),
+    UNIQUE KEY unique_playlist_follow (follower_id, playlist_id),
+    
+    INDEX idx_follower_id (follower_id),
+    INDEX idx_following_id (following_id),
+    INDEX idx_artist_id (artist_id),
+    INDEX idx_playlist_id (playlist_id),
+    INDEX idx_follow_type (follow_type),
+    
+    CONSTRAINT chk_follow_target CHECK (
+        (follow_type = 'user' AND following_id IS NOT NULL AND artist_id IS NULL AND playlist_id IS NULL) OR
+        (follow_type = 'artist' AND artist_id IS NOT NULL AND following_id IS NULL AND playlist_id IS NULL) OR
+        (follow_type = 'playlist' AND playlist_id IS NOT NULL AND following_id IS NULL AND artist_id IS NULL)
+    )
+);
+
+-- Comprehensive play history with session tracking
+CREATE TABLE play_history (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    track_id VARCHAR(36) NOT NULL,
+    session_id VARCHAR(36), -- For grouping plays in listening sessions
+    played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    play_duration_ms INT, -- How long the track was actually played
+    completion_percentage DECIMAL(5,2), -- What % of track was played
+    skip_reason ENUM('user_skip', 'natural_end', 'error', 'playlist_end'), 
+    platform ENUM('web', 'mobile', 'desktop', 'api') DEFAULT 'web',
+    device_info JSON, -- Browser, OS, etc.
+    country_code VARCHAR(2),
+    source_context ENUM('playlist', 'album', 'artist', 'search', 'radio', 'queue') DEFAULT 'queue',
+    source_id VARCHAR(36), -- ID of playlist/album/artist that was the source
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_track_id (track_id),
+    INDEX idx_session_id (session_id),
+    INDEX idx_played_at (played_at),
+    INDEX idx_completion_percentage (completion_percentage),
+    INDEX idx_platform (platform),
+    INDEX idx_source_context (source_context)
+);
+
+-- User liked tracks
+CREATE TABLE liked_tracks (
+    user_id VARCHAR(36) NOT NULL,
+    track_id VARCHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (user_id, track_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
+    INDEX idx_track_id (track_id),
+    INDEX idx_created_at (created_at)
+);
+
+-- User liked albums
+CREATE TABLE liked_albums (
+    user_id VARCHAR(36) NOT NULL,
+    album_id VARCHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (user_id, album_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE,
+    INDEX idx_album_id (album_id),
+    INDEX idx_created_at (created_at)
+);
+
+-- User listening sessions
+CREATE TABLE listening_sessions (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ended_at TIMESTAMP,
+    total_tracks_played INT DEFAULT 0,
+    total_duration_ms BIGINT DEFAULT 0,
+    platform ENUM('web', 'mobile', 'desktop', 'api') DEFAULT 'web',
+    device_info JSON,
+    country_code VARCHAR(2),
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_started_at (started_at),
+    INDEX idx_platform (platform)
+);
+
+-- Queue management
+CREATE TABLE user_queues (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    track_id VARCHAR(36) NOT NULL,
+    position INT NOT NULL,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    source_context ENUM('playlist', 'album', 'artist', 'search', 'radio', 'manual') DEFAULT 'manual',
+    source_id VARCHAR(36),
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_position (user_id, position),
+    INDEX idx_user_id (user_id),
+    INDEX idx_track_id (track_id),
+    INDEX idx_position (position)
+);
+
+-- User preferences and settings
+CREATE TABLE user_preferences (
+    user_id VARCHAR(36) PRIMARY KEY,
+    audio_quality ENUM('low', 'normal', 'high', 'very_high') DEFAULT 'normal',
+    crossfade_duration_ms INT DEFAULT 0, -- 0-12000ms
+    gapless_playback BOOLEAN DEFAULT TRUE,
+    normalize_volume BOOLEAN DEFAULT TRUE,
+    show_explicit_content BOOLEAN DEFAULT TRUE,
+    autoplay_similar BOOLEAN DEFAULT TRUE,
+    social_activity_visible BOOLEAN DEFAULT TRUE,
+    recently_played_visible BOOLEAN DEFAULT TRUE,
+    language_code VARCHAR(5) DEFAULT 'en-US',
+    country_code VARCHAR(2),
+    timezone VARCHAR(50),
+    theme ENUM('dark', 'light', 'auto') DEFAULT 'dark',
+    notifications JSON, -- Detailed notification preferences
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT chk_crossfade_duration CHECK (crossfade_duration_ms >= 0 AND crossfade_duration_ms <= 12000)
+);
+
+-- Content reporting and moderation
+CREATE TABLE content_reports (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    reporter_user_id VARCHAR(36) NOT NULL,
+    content_type ENUM('track', 'album', 'artist', 'playlist', 'user') NOT NULL,
+    content_id VARCHAR(36) NOT NULL,
+    reason ENUM('copyright', 'inappropriate', 'spam', 'harassment', 'other') NOT NULL,
+    description TEXT,
+    status ENUM('pending', 'reviewed', 'resolved', 'dismissed') DEFAULT 'pending',
+    moderator_user_id VARCHAR(36),
+    moderator_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (reporter_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (moderator_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_reporter_user (reporter_user_id),
+    INDEX idx_content_type (content_type),
+    INDEX idx_content_id (content_id),
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
+);
+
+-- Analytics events
+CREATE TABLE analytics_events (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36),
+    session_id VARCHAR(36),
+    event_type VARCHAR(50) NOT NULL, -- 'play', 'skip', 'like', 'share', etc.
+    event_data JSON, -- Flexible event properties
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    platform ENUM('web', 'mobile', 'desktop', 'api') DEFAULT 'web',
+    user_agent TEXT,
+    ip_address INET,
+    country_code VARCHAR(2),
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_user_id (user_id),
+    INDEX idx_session_id (session_id),
+    INDEX idx_event_type (event_type),
+    INDEX idx_timestamp (timestamp),
+    INDEX idx_platform (platform),
+    
+    -- Partition by month for performance
+    PARTITION BY RANGE (YEAR(timestamp) * 100 + MONTH(timestamp)) (
+        PARTITION p202501 VALUES LESS THAN (202502),
+        PARTITION p202502 VALUES LESS THAN (202503),
+        PARTITION p202503 VALUES LESS THAN (202504)
+        -- Add more partitions as needed
+    )
+);
+```
+
+### Database Optimization and Performance Strategies
+
+#### Index Strategy
+```sql
+-- Composite indexes for common query patterns
+CREATE INDEX idx_users_premium_country ON users(premium_tier, country_code);
+CREATE INDEX idx_tracks_artist_popularity ON tracks(artist_id, popularity_score DESC);
+CREATE INDEX idx_tracks_album_position ON tracks(album_id, track_number);
+CREATE INDEX idx_playlists_public_featured ON playlists(public, featured, followers_count DESC);
+CREATE INDEX idx_play_history_user_date ON play_history(user_id, played_at DESC);
+CREATE INDEX idx_play_history_track_date ON play_history(track_id, played_at DESC);
+
+-- Covering indexes for frequently accessed data
+CREATE INDEX idx_tracks_search_covering ON tracks(active, popularity_score DESC) 
+    INCLUDE (id, title, artist_id, duration_ms, preview_url);
+CREATE INDEX idx_playlists_user_covering ON playlists(owner_id, public) 
+    INCLUDE (id, name, cover_image_url, total_tracks, followers_count);
+```
+
+#### Query Optimization Rules
+1. **Always use LIMIT** on large table queries
+2. **Prefer covering indexes** for frequently accessed columns
+3. **Use query hints** for complex joins: `USE INDEX (idx_name)`
+4. **Implement query caching** with Redis for expensive operations
+5. **Use read replicas** for analytics and reporting queries
+
+## Detailed API Specifications
+
+### Authentication API
+
+#### POST /api/auth/register
+**Purpose:** Create new user account
+
+**Request Schema:**
+```typescript
+interface RegisterRequest {
+  email: string; // Valid email format, max 255 chars
+  password: string; // Min 8 chars, 1 uppercase, 1 lowercase, 1 number
+  username: string; // 3-50 chars, alphanumeric + underscore/dash
+  displayName: string; // 1-100 chars
+  birthDate?: string; // ISO date format, must be 13+ years ago
+  country: string; // ISO 3166-1 alpha-2 country code
+  termsAccepted: boolean; // Must be true
+  marketingOptIn?: boolean; // Default false
+}
+```
+
+**Response Schema:**
+```typescript
+interface RegisterResponse {
+  success: boolean;
+  data?: {
+    user: PublicUserProfile;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+    };
+  };
+  error?: {
+    code: string;
+    message: string;
+    field?: string; // For validation errors
+  };
+}
+```
+
+**Validation Rules:**
+- Email: RFC 5322 compliant, not already registered
+- Username: Unique, no reserved words, alphanumeric + underscore/dash only
+- Password: zxcvbn score >= 3, not in common password lists
+- Birth date: Must indicate user is 13+ years old
+- Rate limit: 5 attempts per IP per hour
+
+**Error Codes:**
+- `EMAIL_ALREADY_EXISTS`: Email is already registered
+- `USERNAME_TAKEN`: Username is not available
+- `WEAK_PASSWORD`: Password doesn't meet security requirements
+- `INVALID_EMAIL`: Email format is invalid
+- `UNDERAGE`: User must be 13 or older
+- `RATE_LIMITED`: Too many registration attempts
+
+#### POST /api/auth/login
+**Purpose:** Authenticate existing user
+
+**Request Schema:**
+```typescript
+interface LoginRequest {
+  identifier: string; // Email or username
+  password: string;
+  rememberMe?: boolean; // Extends token lifetime
+  deviceInfo?: {
+    platform: 'web' | 'mobile' | 'desktop';
+    userAgent: string;
+    screenResolution?: string;
+  };
+}
+```
+
+**Business Logic:**
+1. Check for account lockout (5 failed attempts = 30min lockout)
+2. Verify credentials against password hash
+3. Update last_login_at timestamp
+4. Generate JWT tokens with appropriate expiration
+5. Log security event
+6. Return user profile and tokens
+
+#### POST /api/auth/refresh
+**Purpose:** Refresh expired access tokens
+
+**Security:** Requires valid refresh token in httpOnly cookie
+
+### Music Content API
+
+#### GET /api/search
+**Purpose:** Search across all content types with faceted results
+
+**Query Parameters:**
+```typescript
+interface SearchParams {
+  q: string; // Search query, 1-100 chars
+  type?: 'track' | 'artist' | 'album' | 'playlist' | 'all'; // Default 'all'
+  limit?: number; // 1-50, default 20
+  offset?: number; // Default 0, max 1000
+  market?: string; // ISO country code for content filtering
+  includeExternal?: boolean; // Include Spotify content
+  filters?: {
+    genre?: string[];
+    year?: {
+      min?: number;
+      max?: number;
+    };
+    duration?: {
+      min?: number; // milliseconds
+      max?: number;
+    };
+    explicit?: boolean;
+    popularity?: {
+      min?: number; // 0-100
+      max?: number;
+    };
+  };
+  sort?: 'relevance' | 'popularity' | 'name' | 'date' | 'duration';
+  order?: 'asc' | 'desc';
+}
+```
+
+**Response Schema:**
+```typescript
+interface SearchResponse {
+  tracks?: {
+    items: Track[];
+    total: number;
+    limit: number;
+    offset: number;
+  };
+  artists?: {
+    items: Artist[];
+    total: number;
+    limit: number;
+    offset: number;
+  };
+  albums?: {
+    items: Album[];
+    total: number;
+    limit: number;
+    offset: number;
+  };
+  playlists?: {
+    items: Playlist[];
+    total: number;
+    limit: number;
+    offset: number;
+  };
+  queryTime: number; // Response time in ms
+  suggestions?: string[]; // Query suggestions for typos
+}
+```
+
+**Search Implementation:**
+1. **Elasticsearch Query:** Use multi-match query with boosting
+2. **Relevance Scoring:** Title exact match > partial match > phonetic match
+3. **Popularity Boost:** Multiply relevance by popularity score
+4. **Fuzzy Matching:** Allow 1-2 character differences for typos
+5. **Autocomplete:** Return suggestions for partial queries
+
+#### GET /api/tracks/:id
+**Purpose:** Get detailed track information
+
+**Path Parameters:**
+- `id`: Track UUID or Spotify ID
+
+**Query Parameters:**
+```typescript
+interface TrackDetailsParams {
+  market?: string; // For availability checking
+  includeFeatures?: boolean; // Include audio features
+  includeLyrics?: boolean; // Include lyrics if available
+  includeRecommendations?: boolean; // Include similar tracks
+}
+```
+
+**Response Schema:**
+```typescript
+interface TrackDetailsResponse {
+  id: string;
+  title: string;
+  artists: Artist[];
+  album?: Album;
+  duration_ms: number;
+  explicit: boolean;
+  popularity: number;
+  preview_url?: string;
+  audio_url?: string; // Requires authentication
+  available_markets: string[];
+  external_ids: {
+    isrc?: string;
+    spotify?: string;
+  };
+  audio_features?: {
+    danceability: number;
+    energy: number;
+    key: number;
+    loudness: number;
+    mode: number;
+    speechiness: number;
+    acousticness: number;
+    instrumentalness: number;
+    liveness: number;
+    valence: number;
+    tempo: number;
+    time_signature: number;
+  };
+  lyrics?: {
+    text: string;
+    language: string;
+    synchronized?: Array<{
+      text: string;
+      time: number;
+    }>;
+  };
+  recommendations?: Track[];
+  copyright?: {
+    text: string;
+    type: 'C' | 'P';
+  }[];
+}
+```
+
+**Business Logic:**
+1. Check user's market for content availability
+2. Return appropriate audio URL based on user's subscription tier
+3. Track analytics event for track view
+4. Include related content based on user preferences
+
+### Playlist Management API
+
+#### POST /api/playlists
+**Purpose:** Create new playlist
+
+**Request Schema:**
+```typescript
+interface CreatePlaylistRequest {
+  name: string; // 1-255 chars, required
+  description?: string; // Max 500 chars
+  public?: boolean; // Default false
+  collaborative?: boolean; // Default false
+  coverImage?: string; // Base64 encoded image or URL
+}
+```
+
+**Validation Rules:**
+- Name: Required, 1-255 characters, no leading/trailing whitespace
+- Description: Optional, max 500 characters
+- Cover image: JPEG/PNG, max 2MB, min 300x300px
+- User can have max 100 playlists (free) or 500 (premium)
+
+**Business Logic:**
+1. Validate user hasn't exceeded playlist limit
+2. Generate unique playlist ID
+3. Process cover image (resize, upload to S3, generate colors)
+4. Create playlist record in database
+5. Add to user's library automatically
+6. Send real-time update to connected clients
+
+#### POST /api/playlists/:id/tracks
+**Purpose:** Add tracks to playlist
+
+**Request Schema:**
+```typescript
+interface AddTracksRequest {
+  uris: string[]; // Array of track URIs, max 100 per request
+  position?: number; // Insert position, default end
+}
+```
+
+**Business Logic:**
+1. Verify user has write access to playlist
+2. Validate all track URIs exist and are available
+3. Check for duplicates if playlist settings prevent them
+4. Update playlist metadata (total_tracks, total_duration_ms)
+5. Reorder existing tracks if position specified
+6. Send real-time updates to playlist followers
+7. Create activity feed entries
+
+### Player Control API
+
+#### PUT /api/player/play
+**Purpose:** Start playback with specific context
+
+**Request Schema:**
+```typescript
+interface PlaybackRequest {
+  context_uri?: string; // playlist:id, album:id, artist:id
+  uris?: string[]; // Specific track URIs
+  offset?: {
+    position?: number; // Track position in context
+    uri?: string; // Specific track URI to start with
+  };
+  position_ms?: number; // Playback position in track
+}
+```
+
+**Business Logic:**
+1. Validate user subscription allows playback
+2. Check content availability in user's market
+3. Generate HLS streaming URLs with authentication
+4. Update user's current playback state
+5. Log analytics event
+6. Send real-time update to other user devices
+
+#### GET /api/player/current
+**Purpose:** Get current playback state
+
+**Response Schema:**
+```typescript
+interface PlaybackState {
+  device: {
+    id: string;
+    is_active: boolean;
+    is_private_session: boolean;
+    is_restricted: boolean;
+    name: string;
+    type: 'web' | 'mobile' | 'desktop';
+    volume_percent: number;
+  };
+  repeat_state: 'off' | 'track' | 'context';
+  shuffle_state: boolean;
+  context?: {
+    type: 'playlist' | 'album' | 'artist' | 'show';
+    uri: string;
+    href: string;
+  };
+  timestamp: number;
+  progress_ms: number;
+  is_playing: boolean;
+  item?: Track;
+  currently_playing_type: 'track' | 'episode' | 'ad' | 'unknown';
+  actions: {
+    disallows: {
+      interrupting_playback?: boolean;
+      pausing?: boolean;
+      resuming?: boolean;
+      seeking?: boolean;
+      skipping_next?: boolean;
+      skipping_prev?: boolean;
+      toggling_repeat_context?: boolean;
+      toggling_shuffle?: boolean;
+      toggling_repeat_track?: boolean;
+      transferring_playback?: boolean;
+    };
+  };
+}
+```
+
+## Comprehensive Component Specifications
+
+### AudioPlayer Component
+**File:** `src/components/music/AudioPlayer/AudioPlayer.tsx`
+
+**Props Interface:**
+```typescript
+interface AudioPlayerProps {
+  currentTrack?: Track;
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  volume: number;
+  isMuted: boolean;
+  repeat: 'off' | 'track' | 'context';
+  shuffle: boolean;
+  queue: Track[];
+  history: Track[];
+  onPlay: () => void;
+  onPause: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
+  onSeek: (time: number) => void;
+  onVolumeChange: (volume: number) => void;
+  onMute: () => void;
+  onRepeatChange: (mode: 'off' | 'track' | 'context') => void;
+  onShuffleToggle: () => void;
+  onQueueOpen: () => void;
+  className?: string;
+  compact?: boolean; // For mobile view
+}
+```
+
+**State Management:**
+```typescript
+interface AudioPlayerState {
+  audioElement: HTMLAudioElement | null;
+  isLoading: boolean;
+  buffered: TimeRanges | null;
+  playbackRate: number;
+  crossfadeDuration: number;
+  visualizerEnabled: boolean;
+  audioContext: AudioContext | null;
+  analyserNode: AnalyserNode | null;
+}
+```
+
+**Key Features:**
+1. **HLS Streaming:** Support for adaptive bitrate streaming
+2. **Crossfade:** Smooth transitions between tracks
+3. **Gapless Playback:** No silence between tracks
+4. **Audio Visualization:** Real-time frequency analysis
+5. **Keyboard Shortcuts:** Space (play/pause), arrow keys (seek), etc.
+6. **Media Session API:** OS-level media controls
+7. **Service Worker Integration:** Offline playback support
+
+**Implementation Details:**
+```typescript
+const AudioPlayer: React.FC<AudioPlayerProps> = ({
+  currentTrack,
+  isPlaying,
+  currentTime,
+  duration,
+  volume,
+  // ... other props
+}) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { 
+    analyserNode, 
+    audioContext, 
+    setupAudioContext 
+  } = useAudioVisualization();
+  
+  // Initialize HLS player
+  useEffect(() => {
+    if (currentTrack?.hls_url && audioRef.current) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90
+      });
+      
+      hls.loadSource(currentTrack.hls_url);
+      hls.attachMedia(audioRef.current);
+      
+      return () => hls.destroy();
+    }
+  }, [currentTrack?.hls_url]);
+  
+  // Implement crossfade logic
+  const handleTrackTransition = useCallback(async (nextTrack: Track) => {
+    if (crossfadeDuration > 0 && audioRef.current) {
+      const fadeOut = audioRef.current;
+      const fadeIn = new Audio(nextTrack.audio_url);
+      
+      // Preload next track
+      await new Promise((resolve) => {
+        fadeIn.addEventListener('canplaythrough', resolve, { once: true });
+        fadeIn.load();
+      });
+      
+      // Start crossfade
+      const fadeStep = volume / (crossfadeDuration / 100);
+      const interval = setInterval(() => {
+        fadeOut.volume = Math.max(0, fadeOut.volume - fadeStep);
+        fadeIn.volume = Math.min(volume, fadeIn.volume + fadeStep);
+        
+        if (fadeOut.volume <= 0) {
+          clearInterval(interval);
+          // Switch audio elements
+        }
+      }, 100);
+    }
+  }, [crossfadeDuration, volume]);
+  
+  return (
+    <div className="flex items-center justify-between p-4 bg-gray-900 border-t border-gray-800">
+      {/* Track info section */}
+      <div className="flex items-center space-x-3 min-w-0 w-1/3">
+        {currentTrack && (
+          <>
+            <img 
+              src={currentTrack.album?.cover_image_url} 
+              alt={currentTrack.album?.title}
+              className="w-14 h-14 rounded shadow-lg"
+            />
+            <div className="min-w-0">
+              <h4 className="text-white text-sm font-medium truncate">
+                {currentTrack.title}
+              </h4>
+              <p className="text-gray-400 text-xs truncate">
+                {currentTrack.artists.map(a => a.name).join(', ')}
+              </p>
+            </div>
+            <LikeButton trackId={currentTrack.id} />
+          </>
+        )}
+      </div>
+      
+      {/* Main controls section */}
+      <div className="flex flex-col items-center w-1/3 max-w-md">
+        <div className="flex items-center space-x-4 mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onShuffleToggle}
+            className={cn("text-gray-400 hover:text-white", {
+              "text-green-400": shuffle
+            })}
+          >
+            <Shuffle className="w-4 h-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onPrevious}
+            className="text-gray-400 hover:text-white"
+          >
+            <SkipBack className="w-5 h-5" />
+          </Button>
+          
+          <Button
+            onClick={isPlaying ? onPause : onPlay}
+            className="w-8 h-8 bg-white hover:bg-gray-200 text-black rounded-full"
+            disabled={!currentTrack}
+          >
+            {isPlaying ? (
+              <Pause className="w-4 h-4 ml-0.5" />
+            ) : (
+              <Play className="w-4 h-4 ml-0.5" />
+            )}
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onNext}
+            className="text-gray-400 hover:text-white"
+          >
+            <SkipForward className="w-5 h-5" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRepeatChange(getNextRepeatMode(repeat))}
+            className={cn("text-gray-400 hover:text-white", {
+              "text-green-400": repeat !== 'off'
+            })}
+          >
+            <Repeat className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        {/* Progress bar */}
+        <div className="flex items-center space-x-2 w-full">
+          <span className="text-xs text-gray-400 tabular-nums">
+            {formatTime(currentTime)}
+          </span>
+          <ProgressBar
+            value={currentTime}
+            max={duration}
+            onChange={onSeek}
+            className="flex-1"
+          />
+          <span className="text-xs text-gray-400 tabular-nums">
+            {formatTime(duration)}
+          </span>
+        </div>
+      </div>
+      
+      {/* Volume and additional controls */}
+      <div className="flex items-center space-x-2 w-1/3 justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onQueueOpen}
+          className="text-gray-400 hover:text-white"
+        >
+          <Queue className="w-4 h-4" />
+        </Button>
+        
+        <VolumeControl
+          volume={volume}
+          isMuted={isMuted}
+          onVolumeChange={onVolumeChange}
+          onMute={onMute}
+        />
+        
+        {visualizerEnabled && (
+          <canvas
+            ref={canvasRef}
+            width={100}
+            height={40}
+            className="border border-gray-600 rounded"
+          />
+        )}
+      </div>
+      
+      {/* Hidden audio element */}
+      <audio
+        ref={audioRef}
+        preload="metadata"
+        onTimeUpdate={(e) => onSeek(e.currentTarget.currentTime)}
+        onEnded={onNext}
+      />
+    </div>
+  );
+};
+```
+
+### TrackList Component
+**File:** `src/components/music/TrackList/TrackList.tsx`
+
+**Props Interface:**
+```typescript
+interface TrackListProps {
+  tracks: Track[];
+  currentTrack?: Track;
+  isPlaying: boolean;
+  contextUri?: string; // playlist:id, album:id, etc.
+  showArtist?: boolean;
+  showAlbum?: boolean;
+  showDateAdded?: boolean;
+  showDuration?: boolean;
+  showPlayCount?: boolean;
+  showPopularity?: boolean;
+  allowReorder?: boolean;
+  allowRemove?: boolean;
+  onPlay: (track: Track, index: number) => void;
+  onPause: () => void;
+  onRemove?: (trackId: string) => void;
+  onReorder?: (fromIndex: number, toIndex: number) => void;
+  onAddToQueue?: (track: Track) => void;
+  onAddToPlaylist?: (track: Track) => void;
+  className?: string;
+  virtualized?: boolean; // For large lists
+}
+```
+
+**Features:**
+1. **Virtualization:** For lists with 1000+ tracks
+2. **Drag & Drop:** Reorder tracks in playlists
+3. **Context Menu:** Right-click actions
+4. **Keyboard Navigation:** Arrow keys, Enter, Space
+5. **Bulk Selection:** Ctrl/Cmd + click
+6. **Smart Sorting:** Multiple sort criteria
+7. **Infinite Scroll:** Load more tracks on scroll
+
+### SearchBar Component
+**File:** `src/components/features/Search/SearchBar.tsx`
+
+**Props Interface:**
+```typescript
+interface SearchBarProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSearch: (query: string) => void;
+  placeholder?: string;
+  suggestions?: SearchSuggestion[];
+  recentSearches?: string[];
+  showFilters?: boolean;
+  filters?: SearchFilters;
+  onFiltersChange?: (filters: SearchFilters) => void;
+  autoFocus?: boolean;
+  className?: string;
+}
+
+interface SearchSuggestion {
+  type: 'track' | 'artist' | 'album' | 'playlist';
+  id: string;
+  name: string;
+  image?: string;
+  subtitle?: string;
+}
+```
+
+**Features:**
+1. **Debounced Input:** 300ms delay for API calls
+2. **Autocomplete:** Real-time suggestions
+3. **Recent Searches:** Local storage persistence
+4. **Advanced Filters:** Genre, year, duration, etc.
+5. **Keyboard Navigation:** Arrow keys, Enter, Escape
+6. **Voice Search:** Web Speech API integration
+
+## State Management Architecture
+
+### Global State Structure
+```typescript
+// stores/index.ts
+interface GlobalState {
+  auth: AuthState;
+  player: PlayerState;
+  library: LibraryState;
+  search: SearchState;
+  social: SocialState;
+  ui: UIState;
+}
+
+// stores/authStore.ts
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  tokens: {
+    accessToken: string | null;
+    refreshToken: string | null;
+    expiresAt: number | null;
+  };
+  preferences: UserPreferences;
+}
+
+// stores/playerStore.ts
+interface PlayerState {
+  currentTrack: Track | null;
+  queue: Track[];
+  history: Track[];
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  volume: number;
+  isMuted: boolean;
+  repeat: 'off' | 'track' | 'context';
+  shuffle: boolean;
+  crossfadeDuration: number;
+  audioQuality: 'low' | 'normal' | 'high' | 'very_high';
+  deviceId: string;
+  context: {
+    type: 'playlist' | 'album' | 'artist' | 'queue';
+    uri: string;
+    name: string;
+  } | null;
+}
+```
+
+### Zustand Store Implementation
+```typescript
+// stores/playerStore.ts
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
+
+interface PlayerActions {
+  play: (track?: Track, context?: PlaybackContext) => Promise<void>;
+  pause: () => void;
+  next: () => Promise<void>;
+  previous: () => Promise<void>;
+  seek: (time: number) => void;
+  setVolume: (volume: number) => void;
+  toggleMute: () => void;
+  setRepeat: (mode: 'off' | 'track' | 'context') => void;
+  toggleShuffle: () => void;
+  addToQueue: (track: Track | Track[]) => void;
+  removeFromQueue: (index: number) => void;
+  clearQueue: () => void;
+  updateCurrentTime: (time: number) => void;
+  setDuration: (duration: number) => void;
+}
+
+export const usePlayerStore = create<PlayerState & PlayerActions>()(
+  subscribeWithSelector(
+    persist(
+      (set, get) => ({
+        // Initial state
+        currentTrack: null,
+        queue: [],
+        history: [],
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        volume: 0.8,
+        isMuted: false,
+        repeat: 'off',
+        shuffle: false,
+        crossfadeDuration: 0,
+        audioQuality: 'normal',
+        deviceId: '',
+        context: null,
+
+        // Actions
+        play: async (track, context) => {
+          const state = get();
+          
+          if (track) {
+            // Start playing new track
+            set({
+              currentTrack: track,
+              isPlaying: true,
+              currentTime: 0,
+              context
+            });
+            
+            // Add to history
+            if (state.currentTrack && state.currentTrack.id !== track.id) {
+              set(state => ({
+                history: [state.currentTrack!, ...state.history.slice(0, 49)]
+              }));
+            }
+            
+            // Analytics
+            trackPlayEvent(track.id, context);
+          } else {
+            // Resume current track
+            set({ isPlaying: true });
+          }
+        },
+
+        pause: () => {
+          set({ isPlaying: false });
+        },
+
+        next: async () => {
+          const { queue, currentTrack, shuffle, context } = get();
+          
+          if (queue.length > 0) {
+            // Play next in queue
+            const nextTrack = queue[0];
+            set({
+              currentTrack: nextTrack,
+              queue: queue.slice(1),
+              history: currentTrack ? [currentTrack, ...get().history.slice(0, 49)] : get().history
+            });
+          } else if (context) {
+            // Get next from context (playlist, album, etc.)
+            const nextTrack = await getNextTrackFromContext(context, currentTrack, shuffle);
+            if (nextTrack) {
+              get().play(nextTrack, context);
+            }
+          }
+        },
+
+        // ... other actions
+      }),
+      {
+        name: 'player-storage',
+        partialize: (state) => ({
+          volume: state.volume,
+          repeat: state.repeat,
+          shuffle: state.shuffle,
+          crossfadeDuration: state.crossfadeDuration,
+          audioQuality: state.audioQuality
+        })
+      }
+    )
+  )
+);
+
+// Real-time sync across browser tabs
+usePlayerStore.subscribe(
+  (state) => state.isPlaying,
+  (isPlaying) => {
+    // Broadcast to other tabs
+    broadcastChannel.postMessage({
+      type: 'PLAYBACK_STATE_CHANGED',
+      isPlaying
+    });
+  }
+);
+```
+
+## Detailed Styling System
+
+### Tailwind Configuration
+```javascript
+// tailwind.config.js
+const defaultTheme = require('tailwindcss/defaultTheme');
+
+module.exports = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        // Spotify color palette
+        spotify: {
+          green: '#1DB954',
+          'green-dark': '#1ed760',
+          'green-light': '#1fdf64',
+          black: '#191414',
+          'dark-gray': '#121212',
+          'medium-gray': '#282828',
+          'light-gray': '#b3b3b3',
+          white: '#ffffff',
+        },
+        // Custom semantic colors
+        background: {
+          primary: '#121212',
+          secondary: '#191414',
+          tertiary: '#282828',
+          elevated: '#2a2a2a',
+        },
+        text: {
+          primary: '#ffffff',
+          secondary: '#b3b3b3',
+          tertiary: '#535353',
+          inverse: '#000000',
+        },
+        accent: {
+          primary: '#1db954',
+          secondary: '#1ed760',
+          danger: '#e22134',
+          warning: '#f59e0b',
+          info: '#3b82f6',
+        }
+      },
+      fontFamily: {
+        sans: ['Inter', ...defaultTheme.fontFamily.sans],
+      },
+      fontSize: {
+        'xs': ['0.75rem', { lineHeight: '1rem' }],
+        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
+        'base': ['1rem', { lineHeight: '1.5rem' }],
+        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
+        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      },
+      borderRadius: {
+        'none': '0',
+        'sm': '0.125rem',
+        DEFAULT: '0.25rem',
+        'md': '0.375rem',
+        'lg': '0.5rem',
+        'xl': '0.75rem',
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+        'full': '9999px',
+      },
+      boxShadow: {
+        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        DEFAULT: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+        'spotify': '0 16px 24px rgba(0,0,0,.3), 0 6px 8px rgba(0,0,0,.2)',
+        'card': '0 2px 8px rgba(0,0,0,.1)',
+        'card-hover': '0 4px 16px rgba(0,0,0,.2)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'slide-down': 'slideDown 0.3s ease-out',
+        'scale-in': 'scaleIn 0.2s ease-out',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'spin-slow': 'spin 3s linear infinite',
+        'bounce-slow': 'bounce 2s infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+        slideDown: {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0)' },
+          '100%': { transform: 'scale(1)' },
+        },
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        'gradient-spotify': 'linear-gradient(135deg, #1db954 0%, #191414 100%)',
+      },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/aspect-ratio'),
+    require('tailwindcss-animate'),
+  ],
+};
+```
+
+### Component Design Tokens
+```typescript
+// lib/design-tokens.ts
+export const designTokens = {
+  spacing: {
+    xs: '0.5rem',    // 8px
+    sm: '1rem',      // 16px
+    md: '1.5rem',    // 24px
+    lg: '2rem',      // 32px
+    xl: '3rem',      // 48px
+    xxl: '4rem',     // 64px
+  },
+  typography: {
+    heading1: {
+      fontSize: '2.25rem',
+      lineHeight: '2.5rem',
+      fontWeight: '700',
+      letterSpacing: '-0.025em',
+    },
+    heading2: {
+      fontSize: '1.875rem',
+      lineHeight: '2.25rem',
+      fontWeight: '600',
+      letterSpacing: '-0.025em',
+    },
+    heading3: {
+      fontSize: '1.5rem',
+      lineHeight: '2rem',
+      fontWeight: '600',
+    },
+    body: {
+      fontSize: '1rem',
+      lineHeight: '1.5rem',
+      fontWeight: '400',
+    },
+    caption: {
+      fontSize: '0.875rem',
+      lineHeight: '1.25rem',
+      fontWeight: '400',
+    },
+  },
+  colors: {
+    primary: {
+      50: '#f0fdf4',
+      100: '#dcfce7',
+      200: '#bbf7d0',
+      300: '#86efac',
+      400: '#4ade80',
+      500: '#1db954', // Spotify green
+      600: '#16a34a',
+      700: '#15803d',
+      800: '#166534',
+      900: '#14532d',
+    },
+    neutral: {
+      0: '#ffffff',
+      50: '#f9fafb',
+      100: '#f3f4f6',
+      200: '#e5e7eb',
+      300: '#d1d5db',
+      400: '#9ca3af',
+      500: '#6b7280',
+      600: '#4b5563',
+      700: '#374151',
+      800: '#1f2937',
+      900: '#111827',
+      950: '#030712',
+    },
+  },
+  shadows: {
+    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+  },
+  borderRadius: {
+    sm: '0.125rem',
+    md: '0.375rem',
+    lg: '0.5rem',
+    xl: '0.75rem',
+    full: '9999px',
+  },
+} as const;
+```
+
+## Security Implementation
+
+### Authentication Security
+```typescript
+// lib/auth.ts
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
+
+// JWT Configuration
+const JWT_CONFIG = {
+  accessTokenSecret: process.env.JWT_ACCESS_SECRET!,
+  refreshTokenSecret: process.env.JWT_REFRESH_SECRET!,
+  accessTokenExpiry: '15m',
+  refreshTokenExpiry: '7d',
+  issuer: 'snotify.com',
+  audience: 'snotify-users',
+};
+
+// Password hashing
+export const hashPassword = async (password: string): Promise<string> => {
+  const saltRounds = 12;
+  return bcrypt.hash(password, saltRounds);
+};
+
+export const verifyPassword = async (
+  password: string, 
+  hash: string
+): Promise<boolean> => {
+  return bcrypt.compare(password, hash);
+};
+
+// JWT token generation
+export const generateTokens = (userId: string, deviceId?: string) => {
+  const payload = { 
+    userId, 
+    deviceId,
+    type: 'access'
+  };
+  
+  const accessToken = jwt.sign(
+    payload,
+    JWT_CONFIG.accessTokenSecret,
+    {
+      expiresIn: JWT_CONFIG.accessTokenExpiry,
+      issuer: JWT_CONFIG.issuer,
+      audience: JWT_CONFIG.audience,
+    }
+  );
+  
+  const refreshToken = jwt.sign(
+    { ...payload, type: 'refresh' },
+    JWT_CONFIG.refreshTokenSecret,
+    {
+      expiresIn: JWT_CONFIG.refreshTokenExpiry,
+      issuer: JWT_CONFIG.issuer,
+      audience: JWT_CONFIG.audience,
+    }
+  );
+  
+  return { accessToken, refreshToken };
+};
+
+// Rate limiting configurations
+export const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export const apiRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // 1000 requests per window
+  message: 'Too many API requests, please try again later.',
+});
+
+// Input validation schemas
+import { z } from 'zod';
+
+export const registerSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(50, 'Username must be less than 50 characters')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscore, and dash'),
+  displayName: z.string().min(1).max(100),
+  birthDate: z.string().datetime().optional(),
+  country: z.string().length(2),
+  termsAccepted: z.boolean().refine(val => val === true, 'Must accept terms'),
+});
+
+export const loginSchema = z.object({
+  identifier: z.string().min(1, 'Email or username is required'),
+  password: z.string().min(1, 'Password is required'),
+  rememberMe: z.boolean().optional(),
+});
+```
+
+### Content Security Policy
+```typescript
+// next.config.js
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: https: blob:",
+              "media-src 'self' https: blob:",
+              "connect-src 'self' https://api.snotify.com wss://realtime.snotify.com",
+              "worker-src 'self' blob:",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+              "upgrade-insecure-requests",
+            ].join('; '),
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+    ];
+  },
+};
+```
+
+## Performance Optimization Strategy
+
+### Code Splitting and Lazy Loading
+```typescript
+// Dynamic imports for route-based code splitting
+const SearchPage = dynamic(() => import('./search/page'), {
+  loading: () => <SearchPageSkeleton />,
+  ssr: false,
+});
+
+const PlaylistPage = dynamic(() => import('./playlist/[id]/page'), {
+  loading: () => <PlaylistPageSkeleton />,
+});
+
+// Component-level lazy loading
+const AudioVisualizer = lazy(() => import('../AudioVisualizer/AudioVisualizer'));
+const AdvancedFilters = lazy(() => import('../Search/AdvancedFilters'));
+
+// Hook for conditional loading
+const useConditionalComponent = (condition: boolean, importFn: () => Promise<any>) => {
+  const [Component, setComponent] = useState<React.ComponentType | null>(null);
+  
+  useEffect(() => {
+    if (condition && !Component) {
+      importFn().then(mod => setComponent(() => mod.default));
+    }
+  }, [condition, Component, importFn]);
+  
+  return Component;
+};
+```
+
+### Image Optimization
+```typescript
+// lib/image-optimization.ts
+import sharp from 'sharp';
+
+export const optimizeImage = async (
+  buffer: Buffer,
+  options: {
+    width?: number;
+    height?: number;
+    quality?: number;
+    format?: 'jpeg' | 'png' | 'webp';
+  } = {}
+) => {
+  const {
+    width = 800,
+    height = 800,
+    quality = 85,
+    format = 'webp'
+  } = options;
+  
+  return sharp(buffer)
+    .resize(width, height, {
+      fit: 'cover',
+      position: 'center'
+    })
+    .toFormat(format, { quality })
+    .toBuffer();
+};
+
+// Generate multiple sizes for responsive images
+export const generateImageSizes = async (buffer: Buffer) => {
+  const sizes = [
+    { name: 'thumbnail', width: 64, height: 64 },
+    { name: 'small', width: 300, height: 300 },
+    { name: 'medium', width: 640, height: 640 },
+    { name: 'large', width: 1280, height: 1280 },
+  ];
+  
+  const optimized = await Promise.all(
+    sizes.map(async ({ name, width, height }) => ({
+      name,
+      buffer: await optimizeImage(buffer, { width, height }),
+      url: await uploadToS3(buffer, `${name}.webp`)
+    }))
+  );
+  
+  return optimized;
+};
+
+// Extract dominant color from album artwork
+export const extractDominantColor = async (buffer: Buffer): Promise<string> => {
+  const { dominant } = await sharp(buffer)
+    .resize(1, 1)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+    
+  const [r, g, b] = Array.from(dominant);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+```
+
+### Caching Strategy
+```typescript
+// lib/cache.ts
+import Redis from 'ioredis';
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD,
+  retryDelayOnFailover: 100,
+  maxRetriesPerRequest: 3,
+});
+
+// Cache configurations for different data types
+export const CACHE_CONFIG = {
+  tracks: {
+    ttl: 60 * 60 * 24, // 24 hours
+    prefix: 'track:',
+  },
+  playlists: {
+    ttl: 60 * 60 * 2, // 2 hours
+    prefix: 'playlist:',
+  },
+  search: {
+    ttl: 60 * 30, // 30 minutes
+    prefix: 'search:',
+  },
+  user_library: {
+    ttl: 60 * 10, // 10 minutes
+    prefix: 'library:',
+  },
+} as const;
+
+// Generic cache wrapper
+export const withCache = async <T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  config: { ttl: number; prefix: string }
+): Promise<T> => {
+  const cacheKey = `${config.prefix}${key}`;
+  
+  // Try to get from cache
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    return JSON.parse(cached);
+  }
+  
+  // Fetch fresh data
+  const data = await fetcher();
+  
+  // Store in cache
+  await redis.setex(cacheKey, config.ttl, JSON.stringify(data));
+  
+  return data;
+};
+
+// Cache invalidation patterns
+export const invalidateCache = {
+  track: (trackId: string) => redis.del(`${CACHE_CONFIG.tracks.prefix}${trackId}`),
+  playlist: (playlistId: string) => redis.del(`${CACHE_CONFIG.playlists.prefix}${playlistId}`),
+  userLibrary: (userId: string) => redis.del(`${CACHE_CONFIG.user_library.prefix}${userId}`),
+  searchPattern: (pattern: string) => {
+    return redis.eval(`
+      local keys = redis.call('keys', ARGV[1])
+      for i=1,#keys do
+        redis.call('del', keys[i])
+      end
+      return #keys
+    `, 0, `${CACHE_CONFIG.search.prefix}${pattern}*`);
+  },
+};
+
+// React Query configuration
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+  },
+});
+```
+
+## Testing Strategy
+
+### Unit Testing Configuration
+```typescript
+// jest.config.js
+const nextJest = require('next/jest');
+
+const createJestConfig = nextJest({
+  dir: './',
+});
+
+const customJestConfig = {
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapping: {
+    '^@/components/(.*)$': '<rootDir>/src/components/$1',
+    '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
+    '^@/hooks/(.*)$': '<rootDir>/src/hooks/$1',
+    '^@/stores/(.*)$': '<rootDir>/src/stores/$1',
+  },
+  testEnvironment: 'jest-environment-jsdom',
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{js,jsx,ts,tsx}',
+    '!src/**/*.test.{js,jsx,ts,tsx}',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+};
+
+module.exports = createJestConfig(customJestConfig);
+```
+
+### Component Testing Examples
+```typescript
+// components/ui/Button/Button.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button Component', () => {
+  it('renders with correct text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+  
+  it('calls onClick when clicked', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick}>Click me</Button>);
+    
+    fireEvent.click(screen.getByText('Click me'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+  
+  it('applies correct variant styles', () => {
+    render(<Button variant="primary">Primary</Button>);
+    const button = screen.getByText('Primary');
+    expect(button).toHaveClass('bg-green-500');
+  });
+  
+  it('is disabled when loading', () => {
+    render(<Button loading>Loading</Button>);
+    const button = screen.getByRole('button');
+    expect(button).toBeDisabled();
+    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+  });
+});
+
+// components/music/AudioPlayer/AudioPlayer.test.tsx
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { AudioPlayer } from './AudioPlayer';
+import { usePlayerStore } from '@/stores/playerStore';
+
+// Mock the store
+jest.mock('@/stores/playerStore');
+const mockUsePlayerStore = usePlayerStore as jest.MockedFunction<typeof usePlayerStore>;
+
+describe('AudioPlayer Component', () => {
+  const mockTrack = {
+    id: '1',
+    title: 'Test Song',
+    artists: [{ id: '1', name: 'Test Artist' }],
+    duration_ms: 180000,
+    audio_url: 'test.mp3',
+  };
+  
+  beforeEach(() => {
+    mockUsePlayerStore.mockReturnValue({
+      currentTrack: mockTrack,
+      isPlaying: false,
+      currentTime: 0,
+      duration: 180000,
+      volume: 0.8,
+      play: jest.fn(),
+      pause: jest.fn(),
+      next: jest.fn(),
+      previous: jest.fn(),
+    });
+  });
+  
+  it('displays current track information', () => {
+    render(<AudioPlayer />);
+    expect(screen.getByText('Test Song')).toBeInTheDocument();
+    expect(screen.getByText('Test Artist')).toBeInTheDocument();
+  });
+  
+  it('toggles play/pause on button click', async () => {
+    const mockPlay = jest.fn();
+    const mockPause = jest.fn();
+    
+    mockUsePlayerStore.mockReturnValue({
+      ...mockUsePlayerStore(),
+      play: mockPlay,
+      pause: mockPause,
+      isPlaying: false,
+    });
+    
+    render(<AudioPlayer />);
+    const playButton = screen.getByRole('button', { name: /play/i });
+    
+    fireEvent.click(playButton);
+    expect(mockPlay).toHaveBeenCalled();
+  });
+  
+  it('handles keyboard shortcuts', () => {
+    const mockPlay = jest.fn();
+    const mockPause = jest.fn();
+    
+    render(<AudioPlayer />);
+    
+    // Test spacebar for play/pause
+    fireEvent.keyDown(document, { key: ' ' });
+    expect(mockPlay).toHaveBeenCalled();
+  });
+});
+```
+
+### API Testing
+```typescript
+// __tests__/api/auth.test.ts
+import { createMocks } from 'node-mocks-http';
+import handler from '@/pages/api/auth/login';
+import { prismaMock } from '../__mocks__/prisma';
+
+jest.mock('@/lib/db', () => ({
+  prisma: prismaMock,
+}));
+
+describe('/api/auth/login', () => {
+  it('successfully logs in with valid credentials', async () => {
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: {
+        identifier: 'test@example.com',
+        password: 'ValidPassword123',
+      },
+    });
+    
+    prismaMock.user.findFirst.mockResolvedValue({
+      id: '1',
+      email: 'test@example.com',
+      password_hash: 'hashed_password',
+      // ... other user fields
+    });
+    
+    await handler(req, res);
+    
+    expect(res._getStatusCode()).toBe(200);
+    const data = JSON.parse(res._getData());
+    expect(data.success).toBe(true);
+    expect(data.data.tokens.accessToken).toBeDefined();
+  });
+  
+  it('returns error for invalid credentials', async () => {
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: {
+        identifier: 'test@example.com',
+        password: 'WrongPassword',
+      },
+    });
+    
+    prismaMock.user.findFirst.mockResolvedValue(null);
+    
+    await handler(req, res);
+    
+    expect(res._getStatusCode()).toBe(401);
+    const data = JSON.parse(res._getData());
+    expect(data.success).toBe(false);
+    expect(data.error.code).toBe('INVALID_CREDENTIALS');
+  });
+});
+```
+
+### E2E Testing
+```typescript
+// e2e/auth.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Authentication Flow', () => {
+  test('user can register and login', async ({ page }) => {
+    // Go to registration page
+    await page.goto('/register');
+    
+    // Fill registration form
+    await page.fill('[data-testid="email-input"]', 'test@example.com');
+    await page.fill('[data-testid="username-input"]', 'testuser');
+    await page.fill('[data-testid="password-input"]', 'ValidPassword123');
+    await page.fill('[data-testid="display-name-input"]', 'Test User');
+    await page.check('[data-testid="terms-checkbox"]');
+    
+    // Submit form
+    await page.click('[data-testid="register-button"]');
+    
+    // Should redirect to dashboard
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible();
+  });
+  
+  test('user can login with existing account', async ({ page }) => {
+    await page.goto('/login');
+    
+    await page.fill('[data-testid="identifier-input"]', 'test@example.com');
+    await page.fill('[data-testid="password-input"]', 'ValidPassword123');
+    await page.click('[data-testid="login-button"]');
+    
+    await expect(page).toHaveURL('/dashboard');
+  });
+});
+
+// e2e/music-player.spec.ts
+test.describe('Music Player', () => {
+  test.beforeEach(async ({ page }) => {
+    // Login before each test
+    await page.goto('/login');
+    await page.fill('[data-testid="identifier-input"]', 'test@example.com');
+    await page.fill('[data-testid="password-input"]', 'ValidPassword123');
+    await page.click('[data-testid="login-button"]');
+    await page.waitForURL('/dashboard');
+  });
+  
+  test('can play a track', async ({ page }) => {
+    // Find a track and click play
+    await page.click('[data-testid="track-play-button"]');
+    
+    // Verify player is active
+    await expect(page.locator('[data-testid="audio-player"]')).toBeVisible();
+    await expect(page.locator('[data-testid="pause-button"]')).toBeVisible();
+    
+    // Verify track info is displayed
+    await expect(page.locator('[data-testid="current-track-title"]')).not.toBeEmpty();
+  });
+  
+  test('can control playback', async ({ page }) => {
+    // Start playing a track
+    await page.click('[data-testid="track-play-button"]');
+    
+    // Test pause
+    await page.click('[data-testid="pause-button"]');
+    await expect(page.locator('[data-testid="play-button"]')).toBeVisible();
+    
+    // Test volume control
+    await page.click('[data-testid="volume-button"]');
+    await page.fill('[data-testid="volume-slider"]', '50');
+    
+    // Test next/previous
+    await page.click('[data-testid="next-button"]');
+    await page.click('[data-testid="previous-button"]');
+  });
+});
+```
+
+## Deployment Configuration
+
+### Docker Configuration
+```dockerfile
+# Dockerfile
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Next.js collects completely anonymous telemetry data about general usage.
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Build the application
+RUN npm run build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs

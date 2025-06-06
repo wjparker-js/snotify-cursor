@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+        "task-master-ai": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "--package=task-master-ai",
+                "task-master-ai"
+            ],
+            "env": {
+               "OPENROUTER_API_KEY": "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"
+            }
+        }
+    }
+}
