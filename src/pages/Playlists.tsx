@@ -15,13 +15,13 @@ const Playlists: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('/api/playlists');
+        const response = await fetch('http://localhost:4000/api/playlists');
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch playlists');
         // Use the blob endpoint for the cover image
         const mapped = data.map((playlist: any) => ({
           ...playlist,
-          cover: `/api/playlists/${playlist.id}/cover`,
+          cover: `http://localhost:4000/api/playlists/${playlist.id}/cover`,
           title: playlist.name,
           owner: playlist.user?.name || 'Unknown',
         }));
@@ -49,12 +49,12 @@ const Playlists: React.FC = () => {
           setIsLoading(true);
           const fetchPlaylists = async () => {
             try {
-              const response = await fetch('/api/playlists');
+              const response = await fetch('http://localhost:4000/api/playlists');
               const data = await response.json();
               if (!response.ok) throw new Error(data.error || 'Failed to fetch playlists');
               const mapped = data.map((playlist: any) => ({
                 ...playlist,
-                cover: `/api/playlists/${playlist.id}/cover`,
+                cover: `http://localhost:4000/api/playlists/${playlist.id}/cover`,
                 title: playlist.name,
                 owner: playlist.user?.name || 'Unknown',
               }));

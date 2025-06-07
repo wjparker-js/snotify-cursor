@@ -59,7 +59,7 @@ const AddPlaylistDialog: React.FC<AddPlaylistDialogProps> = ({ children, onPlayl
   const onSubmit = async (data: PlaylistFormValues) => {
     setIsCreating(true);
     try {
-      const response = await fetch('/api/playlists', {
+      const response = await fetch('http://localhost:4000/api/playlists', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

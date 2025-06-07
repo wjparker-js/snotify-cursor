@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 // const authRoutes = require('./authRoutes');
 const albumRoutes = require('./albumRoutes');
 const playlistRoutes = require('./playlistRoutes');
@@ -10,6 +11,13 @@ const UPLOADS_BASE_PATH_SERVER = process.env.UPLOADS_BASE_PATH || 'uploads';
 
 const app = express();
 const PORT = 4000;
+
+// Enable CORS for frontend
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 

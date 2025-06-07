@@ -24,7 +24,7 @@ const Playlist: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/playlists/${id}`);
+        const response = await fetch(`http://localhost:4000/api/playlists/${id}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch playlist');
         setPlaylist(data);
@@ -41,7 +41,7 @@ const Playlist: React.FC = () => {
     fetchPlaylist();
   }, [id]);
 
-  const coverUrl = id ? `/api/playlists/${id}/cover?${Date.now()}` : '/placeholder.svg';
+  const coverUrl = id ? `http://localhost:4000/api/playlists/${id}/cover?${Date.now()}` : '/placeholder.svg';
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,7 +51,7 @@ const Playlist: React.FC = () => {
     const formData = new FormData();
     formData.append('cover', fileInputRef.current.files[0]);
     try {
-      const response = await fetch(`/api/playlists/${id}/cover`, {
+      const response = await fetch(`http://localhost:4000/api/playlists/${id}/cover`, {
         method: 'POST',
         body: formData,
       });

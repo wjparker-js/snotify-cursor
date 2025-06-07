@@ -45,7 +45,7 @@ const AddToPlaylistButton: React.FC<AddToPlaylistButtonProps> = ({
     
     setIsLoading(true);
     try {
-      const response = await fetch('/api/playlists');
+      const response = await fetch('http://localhost:4000/api/playlists');
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch playlists');
@@ -68,7 +68,7 @@ const AddToPlaylistButton: React.FC<AddToPlaylistButtonProps> = ({
   const addToPlaylist = async (playlistId: number, playlistName: string) => {
     setIsAddingToPlaylist(true);
     try {
-      const response = await fetch(`/api/playlists/${playlistId}/songs`, {
+      const response = await fetch(`http://localhost:4000/api/playlists/${playlistId}/songs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
