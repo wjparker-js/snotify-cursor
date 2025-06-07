@@ -49,4 +49,76 @@ router3.get('/:id/cover', async (req, res) => {
   }
 });
 
+// POST /api/playlists - create new playlist
+router3.post('/', async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Playlist name is required' });
+    }
+    if (name.length > 100) {
+      return res.status(400).json({ error: 'Playlist name must be 100 characters or less' });
+    }
+    const playlist = await playlistApi.createPlaylist(name.trim(), description || '');
+    res.status(201).json(playlist);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to create playlist' });
+  }
+});
+
+// PUT /api/playlists/:id - update playlist
+router3.put('/:id', async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Playlist name is required' });
+    }
+    if (name.length > 100) {
+      return res.status(400).json({ error: 'Playlist name must be 100 characters or less' });
+    }
+    const playlist = await playlistApi.updatePlaylist(req.params.id, { name: name.trim(), description });
+    res.json(playlist);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to update playlist' });
+  }
+});
+
+// DELETE /api/playlists/:id - delete playlist
+router3.delete('/:id', async (req, res) => {
+  try {
+    await playlistApi.deletePlaylist(req.params.id);
+    res.json({ success: true, message: 'Playlist deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to delete playlist' });
+  }
+});
+
+// POST /api/playlists/:id/songs - add song to playlist
+router3.post('/:id/songs', async (req, res) => {
+  try {
+    const { songId } = req.body;
+    if (!songId) {
+      return res.status(400).json({ error: 'Song ID is required' });
+    }
+    const playlist = await playlistApi.addSongToPlaylist(req.params.id, songId);
+    res.json(playlist);
+  } catch (error) {
+    if (error.message === 'Song is already in this playlist') {
+      res.status(409).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message || 'Failed to add song to playlist' });
+    }
+  }
+});
+
+// DELETE /api/playlists/:id/songs/:songId - remove song from playlist
+router3.delete('/:id/songs/:songId', async (req, res) => {
+  try {
+    await playlistApi.removeSongFromPlaylist(req.params.id, req.params.songId);
+    res.json({ success: true, message: 'Song removed from playlist' });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to remove song from playlist' });
+  }
+});
+
 module.exports = router3; 

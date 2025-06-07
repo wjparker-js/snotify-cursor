@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Heart, Plus, Trash2 } from 'lucide-react';
+import { Play, Pause, Heart, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useMediaPlayer } from '@/contexts/MediaPlayerContext';
 import { useAuth } from '@/context/AuthContext';
+import AddToPlaylistButton from '@/components/playlist/AddToPlaylistButton';
 
 // TODO: Implement track list functionality using MySQL/Prisma and local file storage. Supabase logic removed.
 
@@ -27,23 +28,6 @@ interface TrackListProps {
 const TrackList: React.FC<TrackListProps> = ({ tracks, onPlayTrack, isAdmin }) => {
   const { currentTrack, isPlaying, playTrack, pauseTrack, resumeTrack } = useMediaPlayer();
   const { user } = useAuth();
-  const [playlistModalTrack, setPlaylistModalTrack] = useState<Track | null>(null);
-  const [playlists, setPlaylists] = useState<any[]>([]);
-  const [playlistsLoading, setPlaylistsLoading] = useState(false);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>('');
-
-  // Fetch user playlists
-  useEffect(() => {
-    if (!user) return;
-    setPlaylistsLoading(true);
-    fetch('/api/playlists')
-      .then(res => res.json())
-      .then(data => {
-        setPlaylists(Array.isArray(data) ? data.filter((pl) => pl.userId === user.id) : []);
-      })
-      .catch(() => setPlaylists([]))
-      .finally(() => setPlaylistsLoading(false));
-  }, [user]);
 
   // Placeholder: Replace with real liked tracks logic
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
@@ -55,22 +39,10 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onPlayTrack, isAdmin }) =
     });
   };
 
-  const handleAddToPlaylist = (track: Track) => {
-    setPlaylistModalTrack(track);
-    setSelectedPlaylistId('');
-  };
-
   const handleDeleteTrack = (track: Track) => {
     // Placeholder: Implement admin delete logic
     // eslint-disable-next-line no-console
     console.log('Delete track', track.id);
-  };
-
-  const handleAddTrackToPlaylist = () => {
-    // Placeholder: Implement add to playlist logic
-    // eslint-disable-next-line no-console
-    console.log('Add track', playlistModalTrack?.id, 'to playlist', selectedPlaylistId);
-    setPlaylistModalTrack(null);
   };
 
   if (!tracks || tracks.length === 0) {
@@ -145,9 +117,11 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onPlayTrack, isAdmin }) =
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="Add to playlist" onClick={() => handleAddToPlaylist(track)}>
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                    <AddToPlaylistButton 
+                      trackId={track.id} 
+                      trackTitle={track.title}
+                      variant="icon" 
+                    />
                   </TooltipTrigger>
                   <TooltipContent>Add to Playlist</TooltipContent>
                 </Tooltip>
@@ -166,32 +140,7 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onPlayTrack, isAdmin }) =
           ))}
         </tbody>
       </table>
-      {/* Playlist modal */}
-      {playlistModalTrack && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 p-4 rounded shadow-lg w-80">
-            <div className="mb-2 text-sm font-semibold">Add to Playlist</div>
-            {playlistsLoading ? (
-              <div className="text-xs text-muted-foreground mb-4">Loading playlists...</div>
-            ) : (
-              <select
-                className="w-full mb-4 p-2 rounded bg-zinc-800 text-white"
-                value={selectedPlaylistId}
-                onChange={e => setSelectedPlaylistId(e.target.value)}
-              >
-                <option value="">Select a playlist</option>
-                {playlists.map((pl) => (
-                  <option key={pl.id} value={pl.id}>{pl.name}</option>
-                ))}
-              </select>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button size="sm" variant="secondary" onClick={() => setPlaylistModalTrack(null)}>Cancel</Button>
-              <Button size="sm" variant="default" disabled={!selectedPlaylistId} onClick={handleAddTrackToPlaylist}>Add</Button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

@@ -41,7 +41,33 @@ const Playlists: React.FC = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Playlists</h1>
-      <PlaylistGrid playlists={playlists} />
+      <PlaylistGrid 
+        playlists={playlists} 
+        onPlaylistAdded={() => {
+          // Refresh playlists after adding a new one
+          setPlaylists([]);
+          setIsLoading(true);
+          const fetchPlaylists = async () => {
+            try {
+              const response = await fetch('/api/playlists');
+              const data = await response.json();
+              if (!response.ok) throw new Error(data.error || 'Failed to fetch playlists');
+              const mapped = data.map((playlist: any) => ({
+                ...playlist,
+                cover: `/api/playlists/${playlist.id}/cover`,
+                title: playlist.name,
+                owner: playlist.user?.name || 'Unknown',
+              }));
+              setPlaylists(mapped);
+            } catch (err: any) {
+              setError(err.message || 'Failed to fetch playlists');
+            } finally {
+              setIsLoading(false);
+            }
+          };
+          fetchPlaylists();
+        }}
+      />
     </div>
   );
 };
