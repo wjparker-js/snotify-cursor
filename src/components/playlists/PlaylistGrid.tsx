@@ -1,6 +1,5 @@
 import React from 'react';
 import { PlaylistCard } from './PlaylistCard';
-import AddPlaylistDialog from '../playlist/AddPlaylistDialog';
 
 interface Playlist {
   id: string | number;
@@ -30,26 +29,18 @@ export const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onPlaylis
   const handleMore = (playlist: Playlist) => alert(`More options for: ${playlist.title}`);
 
   return (
-    <div>
-      {/* Add Playlist Button */}
-      <div className="mb-6">
-        <AddPlaylistDialog onPlaylistAdded={onPlaylistAdded} />
-      </div>
-      
-      {/* Playlist Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {playlists.map((playlist) => (
-          <PlaylistCard
-            key={playlist.id}
-            playlist={playlist}
-            onClick={() => onPlaylistClick?.(playlist)}
-            onPlay={() => handlePlay(playlist)}
-            onLike={() => handleLike(playlist)}
-            onAdd={() => handleAdd(playlist)}
-            onMore={() => handleMore(playlist)}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {playlists.map((playlist) => (
+        <PlaylistCard
+          key={playlist.id}
+          playlist={playlist}
+          onClick={() => onPlaylistClick?.(playlist)}
+          onPlay={() => handlePlay(playlist)}
+          onLike={() => handleLike(playlist)}
+          onAdd={() => handleAdd(playlist)}
+          onMore={() => handleMore(playlist)}
+        />
+      ))}
     </div>
   );
 }; 
