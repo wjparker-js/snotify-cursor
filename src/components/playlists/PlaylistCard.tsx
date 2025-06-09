@@ -12,9 +12,10 @@ interface PlaylistCardProps {
 
 export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
   return (
-    <Link to={`/playlist/${playlist.id}`} className="block group">
+    <Link to={`/playlist/${playlist.id}`} className="block group w-full">
       <div
-        className="bg-background rounded-lg shadow-md p-4 flex flex-col items-center group hover:shadow-lg transition-all w-full max-w-[240px] cursor-pointer"
+        className="bg-background rounded-lg shadow-md p-4 flex flex-col items-center group hover:shadow-lg transition-all w-full cursor-pointer"
+        style={{ overflow: 'hidden' }}
         tabIndex={0}
         role="button"
         aria-label={`View playlist ${playlist.title} by ${playlist.owner}`}
@@ -23,8 +24,8 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
           <img
             src={playlist.cover}
             alt={playlist.title}
-            className="object-cover rounded-md"
-            style={{ width: 145, height: 145, maxWidth: '100%', maxHeight: '100%' }}
+            className="object-cover rounded-md mobile-card-image"
+            style={{ width: 116, height: 116, maxWidth: '100%', maxHeight: '100%' }}
             onError={e => (e.currentTarget.src = '/placeholder.svg')}
           />
         </div>

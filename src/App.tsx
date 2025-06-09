@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import Sidebar from "./components/sidebar/Sidebar";
 import TopBar from "./components/navigation/TopBar";
+import MobileTopBar from "./components/navigation/MobileTopBar";
 
 import { useIsMobile } from "./hooks/use-mobile";
 import { AuthProvider } from "./context/AuthContext";
@@ -40,6 +41,11 @@ const App = () => {
   const isMobileView = useIsMobile(700);
   const location = useLocation();
   
+  // Check if current route should show media player
+  const shouldShowMediaPlayer = location.pathname.includes('/album/') || 
+                                location.pathname.includes('/albums/') || 
+                                location.pathname.includes('/playlist/');
+  
   // Always force dark mode
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -59,10 +65,11 @@ const App = () => {
                 <SidebarProvider defaultOpen={!isMobileView}>
                   <div className="flex flex-col h-screen overflow-hidden bg-black text-foreground w-full">
                     <TopBar />
+                    <MobileTopBar />
                     <div className="flex flex-1 min-h-0">
                       <Sidebar />
                       <div className="flex flex-col flex-1 w-full min-h-0">
-                        <div className="flex-grow overflow-y-auto bg-black">
+                        <div className="flex-grow overflow-y-auto bg-black" style={{ paddingBottom: shouldShowMediaPlayer ? (isMobileView ? '29px' : '32px') : '0px' }}>
                           <Routes>
                             <Route path="/" element={<Index />} />
                             <Route path="/albums" element={<Index />} />
@@ -77,9 +84,9 @@ const App = () => {
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </div>
-                        <MediaPlayer />
                       </div>
                     </div>
+                    {shouldShowMediaPlayer && <MediaPlayer />}
                     <Toaster />
                     <Sonner />
                   </div>

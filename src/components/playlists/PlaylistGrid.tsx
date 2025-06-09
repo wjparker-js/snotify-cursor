@@ -29,17 +29,18 @@ export const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onPlaylis
   const handleMore = (playlist: Playlist) => alert(`More options for: ${playlist.title}`);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mobile-single-col mobile-center">
       {playlists.map((playlist) => (
-        <PlaylistCard
-          key={playlist.id}
-          playlist={playlist}
-          onClick={() => onPlaylistClick?.(playlist)}
-          onPlay={() => handlePlay(playlist)}
-          onLike={() => handleLike(playlist)}
-          onAdd={() => handleAdd(playlist)}
-          onMore={() => handleMore(playlist)}
-        />
+        <div key={playlist.id} className="mobile-card-size">
+          <PlaylistCard
+            playlist={playlist}
+            onClick={() => onPlaylistClick?.(playlist)}
+            onPlay={() => handlePlay(playlist)}
+            onLike={() => handleLike(playlist)}
+            onAdd={() => handleAdd(playlist)}
+            onMore={() => handleMore(playlist)}
+          />
+        </div>
       ))}
     </div>
   );

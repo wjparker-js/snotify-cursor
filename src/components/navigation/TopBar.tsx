@@ -14,8 +14,8 @@ const TopBar: React.FC<TopBarProps> = () => {
   const { colorTheme } = useTheme();
 
   return (
-    <div className="h-[45px] w-full bg-black border-b border-zinc-800 flex items-center justify-between px-4">
-      <Link to="/" className="h-[18px] flex items-center hover:opacity-80 transition-opacity">
+    <div className="h-[29px] w-full bg-black border-b border-zinc-800 flex items-center justify-between px-4">
+              <Link to="/" className="h-[12px] flex items-center hover:opacity-80 transition-opacity">
         <img 
           src="/lovable-uploads/8b5edd18-788f-4777-a313-70ccc56e19cf.png" 
           alt="Gerrbill Media" 
@@ -32,10 +32,10 @@ const TopBar: React.FC<TopBarProps> = () => {
         {user && (
           <>
             <Link to="/profile" className="text-white hover:text-theme-color transition-colors">
-              <User size={18} />
+              <User size={14} />
             </Link>
             <Link to="/settings" className="text-white hover:text-theme-color transition-colors">
-              <Settings size={18} />
+              <Settings size={14} />
             </Link>
           </>
         )}

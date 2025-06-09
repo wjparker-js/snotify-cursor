@@ -16,14 +16,14 @@ const getAlbumImageUrl = (image_url: string | null | undefined) => {
 const AlbumCard: React.FC<{ album: any; onPlay?: (album: any) => void }> = ({ album, onPlay }) => {
   const imageUrl = album.id ? `/api/albums/${album.id}/cover` : '/placeholder.svg';
   return (
-    <Link to={`/albums/${album.id}`} className="block group">
-      <div className="bg-background rounded-lg shadow-md p-4 flex flex-col items-center group hover:shadow-lg transition-all w-full max-w-[240px]">
+    <Link to={`/albums/${album.id}`} className="block group w-full">
+      <div className="bg-background rounded-lg shadow-md p-4 flex flex-col items-center group hover:shadow-lg transition-all w-full" style={{ overflow: 'hidden' }}>
         <div className="relative w-full flex justify-center mb-3">
           <img
             src={imageUrl}
             alt={album.title}
-            className="object-cover rounded-md"
-            style={{ width: 145, height: 145, maxWidth: '100%', maxHeight: '100%' }}
+            className="object-cover rounded-md mobile-card-image"
+            style={{ width: 116, height: 116, maxWidth: '100%', maxHeight: '100%' }}
             onError={e => (e.currentTarget.src = '/placeholder.svg')}
           />
           <Button

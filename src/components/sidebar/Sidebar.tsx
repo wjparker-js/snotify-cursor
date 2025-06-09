@@ -120,7 +120,7 @@ const Sidebar: React.FC = () => {
   }
 
   return (
-    <aside className="w-64 bg-gray-900 border-r border-gray-800 p-4 flex flex-col h-full">
+    <aside className="w-64 bg-gray-900 border-r border-gray-800 p-4 flex flex-col h-full mobile-hide desktop-show">
       {/* Tab Buttons */}
       <div className="flex mb-6 bg-gray-800 rounded-lg p-1">
         <button

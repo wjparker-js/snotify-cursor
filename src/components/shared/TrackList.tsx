@@ -76,17 +76,17 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onPlayTrack, isAdmin }) =
       <table className="min-w-full divide-y divide-zinc-700">
         <thead>
           <tr>
-            <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">#</th>
-            <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Title</th>
-            <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Artist</th>
-            <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Duration</th>
-            <th className="px-2 py-1 text-center text-xs font-medium text-muted-foreground">Actions</th>
+            <th className="px-2 py-0.5 text-left text-xs font-medium text-muted-foreground">#</th>
+            <th className="px-2 py-0.5 text-left text-xs font-medium text-muted-foreground">Title</th>
+            <th className="px-2 py-0.5 text-left text-xs font-medium text-muted-foreground">Artist</th>
+            <th className="px-2 py-0.5 text-left text-xs font-medium text-muted-foreground">Duration</th>
+            <th className="px-2 py-0.5 text-center text-xs font-medium text-muted-foreground">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-800">
           {tracks.map((track, index) => (
             <tr key={track.id} className="hover:bg-zinc-900 transition-colors">
-              <td className="px-2 py-1 text-xs text-zinc-300 w-8 text-center flex items-center justify-center gap-1">
+              <td className="px-2 py-0.5 text-xs text-zinc-300 w-8 text-center flex items-center justify-center gap-1">
                 {track.track_number || index + 1}
                 <Button
                   variant="ghost"
@@ -103,10 +103,10 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onPlayTrack, isAdmin }) =
                   )}
                 </Button>
               </td>
-              <td className="px-2 py-1 text-xs font-medium text-white truncate max-w-xs">{track.title}</td>
-              <td className="px-2 py-1 text-xs text-zinc-400 truncate max-w-xs">{track.artist}</td>
-              <td className="px-2 py-1 text-xs text-zinc-400 text-center">{track.duration || '-'}</td>
-              <td className="px-2 py-1 text-xs text-center flex items-center gap-2 justify-center">
+              <td className="px-2 py-0.5 text-xs font-medium text-white truncate max-w-xs">{track.title}</td>
+              <td className="px-2 py-0.5 text-xs text-zinc-400 truncate max-w-xs">{track.artist}</td>
+              <td className="px-2 py-0.5 text-xs text-zinc-400 text-center">{track.duration || '-'}</td>
+              <td className="px-2 py-0.5 text-xs text-center flex items-center gap-2 justify-center">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" aria-label="Like track" onClick={() => handleToggleLike(track.id)}>
