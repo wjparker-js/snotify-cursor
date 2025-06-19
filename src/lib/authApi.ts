@@ -1,4 +1,4 @@
-import prisma from '../integrations/mysql';
+import prisma from '../integrations/mysql.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,19 +7,44 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d';
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
 
-export async function registerUser(email, password) {
+export function validateRegistration(data: any) {
+  if (!data.email || !data.password) {
+    return 'Email and password are required';
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    return 'Invalid email format';
+  }
+  if (data.password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+  return null;
+}
+
+export function validateLogin(data: any) {
+  if (!data.email || !data.password) {
+    return 'Email and password are required';
+  }
+  return null;
+}
+
+export async function registerUser(email: string, password: string) {
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     throw new Error('User already exists');
   }
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
-    data: { email, password: passwordHash },
+    data: { 
+      email, 
+      password: passwordHash,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
   });
   return { id: user.id, email: user.email };
 }
 
-export async function loginUser(email, password) {
+export async function loginUser(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     throw new Error('Invalid email or password');
@@ -32,7 +57,7 @@ export async function loginUser(email, password) {
   return { token, user: { id: user.id, email: user.email } };
 }
 
-export function verifyJWT(token) {
+export function verifyJWT(token: string) {
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch (err) {
@@ -40,28 +65,34 @@ export function verifyJWT(token) {
   }
 }
 
-export async function createRefreshToken(userId) {
+export async function createRefreshToken(userId: string) {
   const token = uuidv4();
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000);
-  await prisma.refreshToken.create({
-    data: { token, userId, expiresAt },
+  await prisma.refreshtoken.create({
+    data: { 
+      token, 
+      userId, 
+      expiresAt,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
   });
   return token;
 }
 
-export async function verifyRefreshToken(token) {
-  const record = await prisma.refreshToken.findUnique({ where: { token } });
+export async function verifyRefreshToken(token: string) {
+  const record = await prisma.refreshtoken.findUnique({ where: { token } });
   if (!record || record.revoked || record.expiresAt < new Date()) {
     throw new Error('Invalid or expired refresh token');
   }
   return record.userId;
 }
 
-export async function revokeRefreshToken(token) {
-  await prisma.refreshToken.updateMany({ where: { token }, data: { revoked: true } });
+export async function revokeRefreshToken(token: string) {
+  await prisma.refreshtoken.updateMany({ where: { token }, data: { revoked: true } });
 }
 
-export async function refreshToken(oldToken) {
+export async function refreshToken(oldToken: string) {
   const userId = await verifyRefreshToken(oldToken);
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new Error('User not found');
@@ -71,11 +102,11 @@ export async function refreshToken(oldToken) {
   return { token: newToken, refreshToken: newRefreshToken, user: { id: user.id, email: user.email } };
 }
 
-export async function logoutUser(refreshTokenValue) {
+export async function logoutUser(refreshTokenValue: string) {
   await revokeRefreshToken(refreshTokenValue);
 }
 
-export async function forgotPassword(email) {
+export async function forgotPassword(email: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new Error('User not found');
   const token = uuidv4();
@@ -87,7 +118,7 @@ export async function forgotPassword(email) {
   return { resetToken: token, expires };
 }
 
-export async function verifyEmail(token) {
+export async function verifyEmail(token: string) {
   const user = await prisma.user.findFirst({ where: { emailVerificationToken: token } });
   if (!user) throw new Error('Invalid or expired verification token');
   await prisma.user.update({
@@ -97,7 +128,7 @@ export async function verifyEmail(token) {
   return { message: 'Email verified' };
 }
 
-export async function getUserProfile(userId) {
+export async function getUserProfile(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -116,7 +147,7 @@ export async function getUserProfile(userId) {
   return user;
 }
 
-export async function updateUserProfile(userId, data) {
+export async function updateUserProfile(userId: string, data: any) {
   const allowedFields = ['email', 'name', 'avatar', 'bio', 'preferences'];
   const updateData = {};
   for (const key of allowedFields) {
@@ -142,7 +173,7 @@ export async function updateUserProfile(userId, data) {
   return user;
 }
 
-export async function deactivateUser(userId) {
+export async function deactivateUser(userId: string) {
   // Soft delete: set email to null and deactivate account
   const user = await prisma.user.update({
     where: { id: userId },
@@ -152,17 +183,17 @@ export async function deactivateUser(userId) {
   return { message: 'Account deactivated' };
 }
 
-export async function getUserTenants(userId) {
-  const userTenants = await prisma.userTenant.findMany({
+export async function getUserTenants(userId: string) {
+  const userTenants = await prisma.usertenant.findMany({
     where: { userId },
     include: { tenant: true },
   });
   return userTenants.map(ut => ({ id: ut.tenant.id, name: ut.tenant.name, role: ut.role }));
 }
 
-export async function switchUserTenant(userId, tenantId) {
+export async function switchUserTenant(userId: string, tenantId: string) {
   // Check if user belongs to tenant
-  const userTenant = await prisma.userTenant.findFirst({ where: { userId, tenantId } });
+  const userTenant = await prisma.usertenant.findFirst({ where: { userId, tenantId } });
   if (!userTenant) throw new Error('User does not belong to this tenant');
   await prisma.user.update({ where: { id: userId }, data: { currentTenantId: tenantId } });
   return { message: 'Tenant switched', tenantId };

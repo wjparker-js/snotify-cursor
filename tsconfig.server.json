@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.node.json",
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifiers": true,
+    "transpileOnly": true,
+    "moduleTypes": {
+      "src/lib/**/*": "esm"
+    }
+  },
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    "target": "ESNext",
+    "sourceMap": true,
+    "outDir": "dist",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/lib/**/*"],
+  "exclude": ["**/*.test.ts"]
+} 

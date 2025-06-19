@@ -1,69 +1,78 @@
-const express2 = require('express');
-const { getAlbums: getAlbums2 } = require('./albumApi');
-const fs = require('fs');
-const path2 = require('path');
-const { PrismaClient } = require('@prisma/client');
-const multer2 = require('multer');
-const mm = require('music-metadata');
-require('dotenv').config();
+import express from 'express';
+import type { Request, Response } from 'express';
+import { getAlbums } from './albumApi.js';
+import fs from 'fs';
+import path from 'path';
+import prisma from '../integrations/mysql.js';
+import multer from 'multer';
+import * as mm from 'music-metadata';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const UPLOADS_BASE_PATH = process.env.UPLOADS_BASE_PATH || 'uploads';
 
-const router = express2.Router();
-const prisma2 = new PrismaClient();
+const router = express.Router();
+
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 // Multer storage config for album images
-const storage = multer2.diskStorage({
-  destination: (req, file, cb) => {
+const storage = multer.diskStorage({
+  destination: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
     const albumId = req.params.id || 'temp';
-    const albumDir = path2.join(UPLOADS_BASE_PATH, 'albums', albumId.toString());
+    const albumDir = path.join(UPLOADS_BASE_PATH, 'albums', albumId.toString());
     fs.mkdirSync(albumDir, { recursive: true });
     cb(null, albumDir);
   },
-  filename: (req, file, cb) => {
-    const ext = path2.extname(file.originalname);
+  filename: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+    const ext = path.extname(file.originalname);
     cb(null, 'cover' + ext);
   },
 });
-const upload = multer2({ storage });
+const upload = multer({ storage });
 
 // Multer storage config for track audio files
-const trackStorage = multer2.diskStorage({
-  destination: (req, file, cb) => {
-    // Use album ID for the subfolder: uploads/albums/[albumId]/
+const trackStorage = multer.diskStorage({
+  destination: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
     const albumId = req.params.albumId;
-    const albumDir = path2.join(UPLOADS_BASE_PATH, 'albums', albumId.toString());
+    const albumDir = path.join(UPLOADS_BASE_PATH, 'albums', albumId.toString());
     fs.mkdirSync(albumDir, { recursive: true });
     cb(null, albumDir);
   },
-  filename: (req, file, cb) => {
+  filename: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
     cb(null, file.originalname);
   },
 });
-const trackUpload = multer2({ storage: trackStorage });
+const trackUpload = multer({ storage: trackStorage });
 
 // Add endpoints for album cover blob upload and serving
-const upload2 = multer2(); // memory storage for blob
+const upload2 = multer(); // memory storage for blob
 
 // GET /api/albums - fetch all albums
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const albums = await getAlbums2();
+    const albums = await getAlbums();
     res.status(200).json(albums);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Unknown error' });
+    }
   }
 });
 
 // POST /api/albums - create album with optional image upload
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', upload.single('image'), async (req: MulterRequest, res: Response) => {
   try {
     const { title, artist, year, track_count, duration, description, genre } = req.body;
     if (!title || !artist) {
       return res.status(400).json({ error: 'Title and artist are required' });
     }
     let image_url = null;
-    const album = await prisma2.album.create({
+    const album = await prisma.album.create({
       data: {
         title,
         artist,
@@ -79,22 +88,26 @@ router.post('/', upload.single('image'), async (req, res) => {
     // Update image_url with proper path structure after getting album ID
     if (req.file) {
       image_url = `albums/${album.id}/${req.file.filename}`;
-      await prisma2.album.update({ 
+      await prisma.album.update({ 
         where: { id: album.id }, 
         data: { image_url: image_url } 
       });
       album.image_url = image_url;
     } else {
       const placeholderUrl = `https://placehold.co/300x300.png?text=Album+${album.id}`;
-      await prisma2.album.update({ where: { id: album.id }, data: { image_url: placeholderUrl } });
+      await prisma.album.update({ where: { id: album.id }, data: { image_url: placeholderUrl } });
       album.image_url = placeholderUrl;
     }
     res.status(201).json(album);
   } catch (error) {
-    console.error('Album creation error:', error && error.stack ? error.stack : error);
+    console.error('Album creation error:', error);
     console.error('Request body:', req.body);
     console.error('Request file:', req.file);
-    res.status(500).json({ error: error.message || 'Unknown error' });
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message || 'Unknown error' });
+    } else {
+      res.status(500).json({ error: 'Unknown error' });
+    }
   }
 });
 
@@ -105,7 +118,7 @@ router.get('/:id', async (req, res) => {
     if (isNaN(albumId)) {
       return res.status(400).json({ error: 'Invalid album id' });
     }
-    let album = await prisma2.album.findUnique({ where: { id: albumId } });
+    let album = await prisma.album.findUnique({ where: { id: albumId } });
     if (!album) {
       return res.status(404).json({ error: 'Album not found' });
     }
@@ -128,7 +141,7 @@ router.post('/:albumId/tracks', trackUpload.single('audio'), async (req, res) =>
       return res.status(400).json({ error: 'Audio file and albumId are required' });
     }
     // Fetch album to get the title
-    const album = await prisma2.album.findUnique({ where: { id: albumId } });
+    const album = await prisma.album.findUnique({ where: { id: albumId } });
     if (!album) {
       return res.status(404).json({ error: 'Album not found' });
     }
@@ -152,7 +165,7 @@ router.post('/:albumId/tracks', trackUpload.single('audio'), async (req, res) =>
     } catch (err) {
       console.warn('Could not parse audio duration:', err);
     }
-    const song = await prisma2.song.create({
+    const song = await prisma.song.create({
       data: {
         title,
         artist,
@@ -177,7 +190,7 @@ router.get('/:albumId/tracks', async (req, res) => {
     if (isNaN(albumId)) {
       return res.status(400).json({ error: 'Invalid albumId' });
     }
-    const tracks = await prisma2.song.findMany({ where: { albumId } });
+    const tracks = await prisma.song.findMany({ where: { albumId } });
     if (!tracks || tracks.length === 0) {
       return res.status(404).json({ error: 'No tracks found for this album' });
     }
@@ -193,7 +206,7 @@ router.post('/:id/cover', upload2.single('cover'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const albumId = parseInt(req.params.id, 10);
     if (isNaN(albumId)) return res.status(400).json({ error: 'Invalid album id' });
-    const album = await prisma2.album.update({
+    const album = await prisma.album.update({
       where: { id: albumId },
       data: { cover_blob: req.file.buffer },
     });
@@ -208,7 +221,7 @@ router.get('/:id/cover', async (req, res) => {
   try {
     const albumId = parseInt(req.params.id, 10);
     if (isNaN(albumId)) return res.status(400).send('Invalid album id');
-    const album = await prisma2.album.findUnique({ where: { id: albumId } });
+    const album = await prisma.album.findUnique({ where: { id: albumId } });
     if (!album || !album.cover_blob) return res.status(404).send('No cover image');
     res.set('Content-Type', 'image/jpeg');
     res.send(Buffer.from(album.cover_blob));
@@ -217,4 +230,4 @@ router.get('/:id/cover', async (req, res) => {
   }
 });
 
-module.exports = router; 
+export default router; 

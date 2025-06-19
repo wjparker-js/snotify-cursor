@@ -1,11 +1,11 @@
-const request = require('supertest');
-const expressTest = require('express');
-const authRoutes = require('./authRoutes');
-const { PrismaClient } = require('@prisma/client');
+import request from 'supertest';
+import express from 'express';
+import authRoutes from './authRoutes.js';
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-const app = expressTest();
-app.use(expressTest.json());
+const app = express();
+app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 const password = 'TestPassword123!';

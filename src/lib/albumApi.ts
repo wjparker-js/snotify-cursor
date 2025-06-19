@@ -1,34 +1,31 @@
-const { PrismaClient: PrismaClient2 } = require('@prisma/client');
-const prisma = new PrismaClient2();
+import prisma from '../integrations/mysql.js';
 
 // Fetch all albums from MySQL using Prisma
-async function getAlbums() {
+export async function getAlbums() {
   try {
     const albums = await prisma.album.findMany({
       orderBy: { createdAt: 'desc' },
     });
     return albums;
-  } catch (error) {
+  } catch (error: any) {
     throw new Error('Failed to fetch albums: ' + error.message);
   }
 }
 
 // TODO: Implement album CRUD using Prisma. These are stubs for future implementation.
 
-async function getAlbumById(albumId) {
+export async function getAlbumById(albumId: number) {
   throw new Error('Album fetching by ID is not implemented. Replace with Prisma logic.');
 }
 
-async function createAlbum(/* albumData */) {
+export async function createAlbum(/* albumData */) {
   throw new Error('Album creation is not implemented. Replace with Prisma logic.');
 }
 
-async function updateAlbum(/* albumId, albumData */) {
+export async function updateAlbum(/* albumId, albumData */) {
   throw new Error('Album update is not implemented. Replace with Prisma logic.');
 }
 
-async function deleteAlbum(/* albumId */) {
+export async function deleteAlbum(/* albumId */) {
   throw new Error('Album deletion is not implemented. Replace with Prisma logic.');
-}
-
-module.exports = { getAlbums, getAlbumById, createAlbum, updateAlbum, deleteAlbum }; 
+} 

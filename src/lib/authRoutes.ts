@@ -1,32 +1,119 @@
-const express = require('express');
-const { registerUser, loginUser, refreshToken, logoutUser, forgotPassword, verifyEmail, getUserProfile, updateUserProfile, deactivateUser, getUserTenants, switchUserTenant, createRefreshToken } = require('./authApi');
+import express from 'express';
+import type { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { validateRegistration, validateLogin, registerUser, loginUser, refreshToken, logoutUser, forgotPassword, verifyEmail, getUserProfile, updateUserProfile, deactivateUser, getUserTenants, switchUserTenant, createRefreshToken, verifyJWT } from './authApi.js';
+
+interface AuthenticatedRequest extends Request {
+  user?: any;
+}
 
 const router = express.Router();
+const prisma = new PrismaClient();
 
-router.post('/register', async (req, res) => {
+// Register endpoint
+router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    const validationError = validateRegistration(req.body);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
-    const user = await registerUser(email, password);
-    res.status(201).json({ user });
+
+    const { username, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username },
+          { email }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Username or email already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword
+      }
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
+    });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.post('/login', async (req, res) => {
+// Login endpoint
+router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    const validationError = validateLogin(req.body);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
-    const result = await loginUser(email, password);
-    const refreshTokenValue = await createRefreshToken(result.user.id);
-    res.status(200).json({ ...result, refreshToken: refreshTokenValue });
+
+    const { email, password } = req.body;
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
+    });
   } catch (error) {
-    res.status(401).json({ error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -34,11 +121,12 @@ router.post('/refresh', async (req, res) => {
   try {
     const { refreshToken: oldToken } = req.body;
     if (!oldToken) {
-      return res.status(400).json({ error: 'Refresh token is required' });
+      res.status(400).json({ error: 'Refresh token is required' });
+      return;
     }
     const result = await refreshToken(oldToken);
     res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     res.status(401).json({ error: error.message });
   }
 });
@@ -47,11 +135,12 @@ router.post('/logout', async (req, res) => {
   try {
     const { refreshToken: token } = req.body;
     if (!token) {
-      return res.status(400).json({ error: 'Refresh token is required' });
+      res.status(400).json({ error: 'Refresh token is required' });
+      return;
     }
     await logoutUser(token);
     res.status(200).json({ message: 'Logged out successfully' });
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -60,11 +149,12 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+      res.status(400).json({ error: 'Email is required' });
+      return;
     }
     const result = await forgotPassword(email);
     res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -73,76 +163,79 @@ router.post('/verify-email', async (req, res) => {
   try {
     const { token } = req.body;
     if (!token) {
-      return res.status(400).json({ error: 'Verification token is required' });
+      res.status(400).json({ error: 'Verification token is required' });
+      return;
     }
     const result = await verifyEmail(token);
     res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
 
-function requireAuth(req, res, next) {
+function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    return;
   }
   try {
-    const payload = require('./authApi').verifyJWT(auth.split(' ')[1]);
+    const payload = verifyJWT(auth.split(' ')[1]);
     req.user = payload;
     next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+  } catch (err: any) {
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
 
-router.get('/users/profile', requireAuth, async (req, res) => {
+router.get('/users/profile', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const user = await getUserProfile(req.user.userId);
+    const user = await getUserProfile(req.user?.userId);
     res.status(200).json(user);
-  } catch (error) {
+  } catch (error: any) {
     res.status(404).json({ error: error.message });
   }
 });
 
-router.put('/users/profile', requireAuth, async (req, res) => {
+router.put('/users/profile', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const user = await updateUserProfile(req.user.userId, req.body);
+    const user = await updateUserProfile(req.user?.userId, req.body);
     res.status(200).json(user);
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
 
-router.delete('/users/profile', requireAuth, async (req, res) => {
+router.delete('/users/profile', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const result = await deactivateUser(req.user.userId);
+    const result = await deactivateUser(req.user?.userId);
     res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
 
-router.get('/users/tenants', requireAuth, async (req, res) => {
+router.get('/users/tenants', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const tenants = await getUserTenants(req.user.userId);
+    const tenants = await getUserTenants(req.user?.userId);
     res.status(200).json(tenants);
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
 
-router.post('/users/switch-tenant', requireAuth, async (req, res) => {
+router.post('/users/switch-tenant', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { tenantId } = req.body;
     if (!tenantId) {
-      return res.status(400).json({ error: 'tenantId is required' });
+      res.status(400).json({ error: 'tenantId is required' });
+      return;
     }
-    const result = await switchUserTenant(req.user.userId, tenantId);
+    const result = await switchUserTenant(req.user?.userId, tenantId);
     res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
 
-module.exports = router; 
+export default router; 

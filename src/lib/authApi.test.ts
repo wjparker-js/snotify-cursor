@@ -1,8 +1,9 @@
-const authApi = require('./authApi');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-const jwt = require('jsonwebtoken');
+import * as authApi from './authApi.js';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
+const prisma = new PrismaClient();
 const { refreshToken, createRefreshToken, logoutUser, forgotPassword, verifyEmail, getUserProfile, updateUserProfile, deactivateUser, getUserTenants, switchUserTenant } = authApi;
 const prismaClient = prisma;
 const jwtLib = jwt;

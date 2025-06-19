@@ -1,5 +1,5 @@
-import { wsLogger } from './logger';
-import { prisma } from '@/lib/prisma';
+import { wsLogger } from './logger.js';
+import prisma from '../../integrations/mysql.js';
 
 interface WebSocketMessage {
   type: string;

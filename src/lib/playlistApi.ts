@@ -1,8 +1,13 @@
-import prisma from '../integrations/mysql';
+import prisma from '../integrations/mysql.js';
+
+interface PlaylistData {
+  name: string;
+  description?: string;
+}
 
 // TODO: Implement playlist CRUD using Prisma. These are stubs for future implementation.
 
-async function getPlaylists() {
+export async function getPlaylists() {
   return await prisma.playlist.findMany({
     include: {
       user: true,
@@ -16,7 +21,7 @@ async function getPlaylists() {
   });
 }
 
-async function getPlaylistById(playlistId) {
+export async function getPlaylistById(playlistId: string | number) {
   return await prisma.playlist.findUnique({
     where: { id: Number(playlistId) },
     include: {
@@ -30,7 +35,7 @@ async function getPlaylistById(playlistId) {
   });
 }
 
-async function createPlaylist(name, description = '', userId = 1) {
+export async function createPlaylist(name: string, description: string = '', userId: number = 1) {
   return await prisma.playlist.create({
     data: {
       name,
@@ -49,7 +54,7 @@ async function createPlaylist(name, description = '', userId = 1) {
   });
 }
 
-async function updatePlaylist(playlistId, { name, description }) {
+export async function updatePlaylist(playlistId: string | number, { name, description }: PlaylistData) {
   return await prisma.playlist.update({
     where: { id: Number(playlistId) },
     data: {
@@ -67,7 +72,7 @@ async function updatePlaylist(playlistId, { name, description }) {
   });
 }
 
-async function deletePlaylist(playlistId) {
+export async function deletePlaylist(playlistId: string | number) {
   // First delete all associated playlist songs
   await prisma.playlistsong.deleteMany({
     where: { playlistId: Number(playlistId) },
@@ -79,14 +84,14 @@ async function deletePlaylist(playlistId) {
   });
 }
 
-async function setPlaylistCoverBlob(playlistId, buffer) {
+export async function setPlaylistCoverBlob(playlistId: string | number, buffer: Buffer) {
   return await prisma.playlist.update({
     where: { id: Number(playlistId) },
     data: { cover_blob: buffer },
   });
 }
 
-async function addSongToPlaylist(playlistId, songId) {
+export async function addSongToPlaylist(playlistId: string | number, songId: string | number) {
   // Check if song is already in playlist to prevent duplicates
   const existing = await prisma.playlistsong.findFirst({
     where: {
@@ -111,22 +116,11 @@ async function addSongToPlaylist(playlistId, songId) {
   return await getPlaylistById(playlistId);
 }
 
-async function removeSongFromPlaylist(playlistId, songId) {
+export async function removeSongFromPlaylist(playlistId: string | number, songId: string | number) {
   return await prisma.playlistsong.deleteMany({
     where: {
       playlistId: Number(playlistId),
       songId: Number(songId),
     },
   });
-}
-
-module.exports = { 
-  getPlaylists, 
-  getPlaylistById, 
-  createPlaylist, 
-  updatePlaylist, 
-  deletePlaylist, 
-  setPlaylistCoverBlob,
-  addSongToPlaylist,
-  removeSongFromPlaylist
-}; 
+} 

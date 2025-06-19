@@ -6,9 +6,12 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
-    port: 8080,
+    host: '0.0.0.0',
+    port: 3000,
     strictPort: true,
+    allowedHosts: [
+      '46f1-216-212-41-79.ngrok-free.app',
+    ],
     hmr: {
       timeout: 120000,
     },

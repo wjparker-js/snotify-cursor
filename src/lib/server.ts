@@ -1,11 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-// const authRoutes = require('./authRoutes');
-const albumRoutes = require('./albumRoutes');
-const playlistRoutes = require('./playlistRoutes');
-const multer = require('multer');
-const path = require('path');
-require('dotenv').config();
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import authRoutes from './authRoutes.js';
+import albumRoutes from './albumRoutes.js';
+import playlistRoutes from './playlistRoutes.js';
+import multer from 'multer';
+import path from 'path';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+dotenv.config();
 
 const UPLOADS_BASE_PATH_SERVER = process.env.UPLOADS_BASE_PATH || 'uploads';
 
@@ -24,15 +29,15 @@ app.use(express.json());
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.resolve(UPLOADS_BASE_PATH_SERVER)));
 
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/api/playlists', playlistRoutes);
 
-app.get('/api/auth/health', (req, res) => {
+app.get('/api/auth/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'Auth server is running' });
 });
 
-app.use((err, req, res, next) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
