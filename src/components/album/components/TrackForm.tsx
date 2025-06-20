@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
@@ -28,36 +27,47 @@ export interface TrackFormProps {
   onCancel: () => void;
 }
 
-const TrackForm: React.FC<TrackFormProps> = ({
+export interface TrackFormRef {
+  updateTitle: (title: string) => void;
+}
+
+const TrackForm = forwardRef<TrackFormRef, TrackFormProps>(({
   initialValues,
   audioFile,
   isSubmitting,
   handleFileChange,
   onSubmit,
   onCancel
-}) => {
+}, ref) => {
   const form = useForm<TrackFormValues>({
     resolver: zodResolver(trackFormSchema),
     defaultValues: initialValues,
   });
 
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    updateTitle: (title: string) => {
+      form.setValue('title', title);
+    }
+  }));
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         <AudioUpload 
           audioFile={audioFile} 
           handleFileChange={handleFileChange} 
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Title</FormLabel>
+                <FormLabel className="text-xs font-medium">Title</FormLabel>
                 <FormControl>
-                  <Input placeholder="Track title" {...field} />
+                  <Input placeholder="Track title" className="h-8" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -69,9 +79,9 @@ const TrackForm: React.FC<TrackFormProps> = ({
             name="artist"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Artist</FormLabel>
+                <FormLabel className="text-xs font-medium">Artist</FormLabel>
                 <FormControl>
-                  <Input placeholder="Artist name" {...field} />
+                  <Input placeholder="Artist name" className="h-8" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -79,18 +89,19 @@ const TrackForm: React.FC<TrackFormProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="trackNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Track Number</FormLabel>
+                <FormLabel className="text-xs font-medium">Track #</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
                     placeholder="1" 
                     min="1" 
+                    className="h-8"
                     {...field} 
                   />
                 </FormControl>
@@ -101,12 +112,12 @@ const TrackForm: React.FC<TrackFormProps> = ({
           
           <FormField
             control={form.control}
-            name="duration"
+            name="genre"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Duration (mm:ss)</FormLabel>
+                <FormLabel className="text-xs font-medium">Genre</FormLabel>
                 <FormControl>
-                  <Input placeholder="3:45" {...field} />
+                  <Input placeholder="Genre" className="h-8" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -116,28 +127,14 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
         <FormField
           control={form.control}
-          name="genre"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Genre (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="Genre" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="comment"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">Comment (Optional)</FormLabel>
+              <FormLabel className="text-xs font-medium">Comment (Optional)</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Add any additional information about this track"
-                  className="resize-none"
+                  placeholder="Additional information"
+                  className="resize-none h-16 text-sm"
                   {...field}
                 />
               </FormControl>
@@ -146,10 +143,11 @@ const TrackForm: React.FC<TrackFormProps> = ({
           )}
         />
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-2">
           <Button 
             type="button" 
             variant="outline" 
+            size="sm"
             onClick={onCancel}
             disabled={isSubmitting}
           >
@@ -157,14 +155,17 @@ const TrackForm: React.FC<TrackFormProps> = ({
           </Button>
           <Button 
             type="submit"
+            size="sm"
             disabled={isSubmitting || !audioFile}
           >
-            {isSubmitting ? 'Adding Track...' : 'Add Track'}
+            {isSubmitting ? 'Adding...' : 'Add Track'}
           </Button>
         </div>
       </form>
     </Form>
   );
-};
+});
+
+TrackForm.displayName = 'TrackForm';
 
 export default TrackForm;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -21,7 +21,13 @@ const AddTrackDialog: React.FC<AddTrackDialogProps> = ({
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const trackFormRef = useRef<{ updateTitle: (title: string) => void }>(null);
   const { toast } = useToast();
+
+  // Function to extract filename without extension
+  const getFilenameWithoutExtension = (filename: string): string => {
+    return filename.replace(/\.[^/.]+$/, "");
+  };
 
   const handleSubmit = async (data: TrackFormValues) => {
     if (!audioFile) {
@@ -38,12 +44,11 @@ const AddTrackDialog: React.FC<AddTrackDialogProps> = ({
       const formData = new FormData();
       formData.append('title', data.title);
       formData.append('artist', data.artist || artist || "");
-      formData.append('duration', data.duration || "0:00");
       formData.append('genre', data.genre || "");
       formData.append('track_number', data.trackNumber ? data.trackNumber.toString() : "1");
       formData.append('audio', audioFile);
 
-      const response = await fetch(`/api/albums/${albumId}/tracks`, {
+      const response = await fetch(`http://localhost:4000/api/albums/${albumId}/tracks`, {
         method: 'POST',
         body: formData
       });
@@ -57,6 +62,8 @@ const AddTrackDialog: React.FC<AddTrackDialogProps> = ({
         description: "Track added successfully"
       });
       setOpen(false);
+      // Reset form
+      setAudioFile(null);
     } catch (error: any) {
       console.error('Error adding track:', error);
       toast({
@@ -71,8 +78,20 @@ const AddTrackDialog: React.FC<AddTrackDialogProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setAudioFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setAudioFile(file);
+      
+      // Auto-fill the title with filename (without extension)
+      const titleFromFilename = getFilenameWithoutExtension(file.name);
+      if (trackFormRef.current) {
+        trackFormRef.current.updateTitle(titleFromFilename);
+      }
     }
+  };
+
+  const handleCancel = () => {
+    setOpen(false);
+    setAudioFile(null);
   };
 
   return (
@@ -80,23 +99,23 @@ const AddTrackDialog: React.FC<AddTrackDialogProps> = ({
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[420px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add track to {albumTitle}</DialogTitle>
+          <DialogTitle className="text-lg">Add Track to {albumTitle}</DialogTitle>
         </DialogHeader>
 
         {isSubmitting ? (
-          <div className="flex flex-col items-center justify-center py-8">
+          <div className="flex flex-col items-center justify-center py-6">
             <Spinner size="lg" className="mb-4" />
             <p className="text-center text-muted-foreground">Uploading track...</p>
           </div>
         ) : (
           <TrackForm 
+            ref={trackFormRef}
             initialValues={{
               title: "",
               artist: artist || "",
               trackNumber: "",
-              duration: "",
               genre: "",
               comment: ""
             }}
@@ -104,7 +123,7 @@ const AddTrackDialog: React.FC<AddTrackDialogProps> = ({
             isSubmitting={isSubmitting}
             handleFileChange={handleFileChange}
             onSubmit={handleSubmit}
-            onCancel={() => setOpen(false)}
+            onCancel={handleCancel}
           />
         )}
       </DialogContent>

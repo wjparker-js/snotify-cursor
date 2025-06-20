@@ -32,7 +32,7 @@ const Playlist: React.FC = () => {
           ...ps.song,
           track_number: idx + 1,
           audioUrl: ps.song.url ? `http://localhost:4000/uploads/${ps.song.url.replace(/^\/+/, '')}` : '',
-          albumArt: `/api/albums/${ps.song.albumId}/cover`
+          albumArt: `http://localhost:4000/api/albums/${ps.song.albumId}/cover`
         })) || []);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch playlist');

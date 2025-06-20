@@ -1,56 +1,83 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+
+interface AlbumItemProps {
+  album: {
+    id: number;
+    title: string;
+    artist: string;
+    image_url?: string;
+  };
+}
 
 const getAlbumImageUrl = (image_url: string | null | undefined) => {
   if (!image_url) return '/placeholder.svg';
+  // If the image_url is an absolute URL (http/https), use as is
   if (/^https?:\/\//i.test(image_url)) return image_url;
-  return `http://localhost:4000/uploads/${image_url.replace(/^\/+|\\/g, '/')}`;
+  // Otherwise, treat as relative and prefix with backend uploads URL
+  return `http://localhost:4000/uploads/${image_url.replace(/^\/+|\\+/g, '')}`;
 };
 
-interface Album {
-  id: string;
-  title: string;
-  artist: string;
-  image_url: string | null;
-  created_at: string;
-}
-
-interface AlbumItemProps {
-  album: Album;
-}
-
 const AlbumItem: React.FC<AlbumItemProps> = ({ album }) => {
-  const imageUrl = getAlbumImageUrl(album.image_url);
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [displayImageSrc, setDisplayImageSrc] = useState('/placeholder.svg');
+  
+  // Use the album's image_url field directly, with fallback to cover endpoint
+  const imageUrl = !imageError && album.image_url 
+    ? getAlbumImageUrl(album.image_url)
+    : album.id 
+      ? `http://localhost:4000/api/albums/${album.id}/cover`
+      : '/placeholder.svg';
+
+  // Preload the image and set display src only when loaded
+  useEffect(() => {
+    if (imageUrl && imageUrl !== '/placeholder.svg') {
+      const img = new Image();
+      img.onload = () => {
+        setDisplayImageSrc(imageUrl);
+        setImageLoaded(true);
+      };
+      img.onerror = () => {
+        setImageError(true);
+        setDisplayImageSrc('/placeholder.svg');
+        setImageLoaded(true);
+      };
+      img.src = imageUrl;
+    } else {
+      setDisplayImageSrc('/placeholder.svg');
+      setImageLoaded(true);
+    }
+  }, [imageUrl]);
 
   return (
-    <Link to={`/album/${album.id}`} className="block">
-      <div className="flex items-center gap-3 p-2 rounded-md hover:bg-zinc-900 cursor-pointer group">
-        <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden flex items-center justify-center bg-zinc-700">
-          {imageUrl ? (
-            <img 
-              src={imageUrl} 
-              alt={album.title} 
-              className="w-full h-full object-cover" 
-              onError={(e) => {
-                console.log("Error loading image:", imageUrl);
-                e.currentTarget.src = '/placeholder.svg';
-              }}
-            />
-          ) : (
-            <span className="text-sm font-medium text-white">{album.title[0]}</span>
-          )}
-        </div>
-        
-        <div className="flex flex-col min-w-0">
-          <span className="text-sm font-medium text-white truncate group-hover:text-theme-color transition-colors">
-            {album.title}
-          </span>
-          <div className="flex items-center text-xs text-spotify-text-secondary">
-            <span className="truncate">
-              Album • {album.artist}
-            </span>
+    <Link 
+      to={`/albums/${album.id}`} 
+      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+    >
+      <div className="relative flex-shrink-0" style={{ width: 40, height: 40 }}>
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-muted rounded flex items-center justify-center">
+            <div className="w-4 h-4 bg-muted-foreground/20 rounded"></div>
           </div>
-        </div>
+        )}
+        <img
+          src={displayImageSrc}
+          alt={album.title}
+          className={`object-cover rounded transition-opacity duration-200 ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ width: 40, height: 40 }}
+          loading="eager"
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate group-hover:text-foreground">
+          {album.title}
+        </p>
+        <p className="text-xs text-muted-foreground truncate">
+          {album.artist}
+        </p>
       </div>
     </Link>
   );

@@ -21,7 +21,7 @@ import { useIsMobile } from "./hooks/use-mobile";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ToastProvider } from "@/hooks/use-toast.tsx";
+import { ToastProvider } from "@/hooks/use-toast";
 import AlbumDetailsPage from './pages/albums/[id]';
 import { MediaPlayerProvider } from '@/contexts/MediaPlayerContext';
 import MediaPlayer from '@/components/player/MediaPlayer';

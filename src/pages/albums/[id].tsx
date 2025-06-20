@@ -28,7 +28,6 @@ const AlbumDetailsPage: React.FC = () => {
     genre: '',
     year: '',
     trackNumber: '',
-    duration: '',
   });
   const audioInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -38,7 +37,7 @@ const AlbumDetailsPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/albums/${id}`);
+        const response = await fetch(`http://localhost:4000/api/albums/${id}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch album');
         setAlbum(data);
@@ -57,7 +56,7 @@ const AlbumDetailsPage: React.FC = () => {
       setTracksLoading(true);
       setTracksError(null);
       try {
-        const response = await fetch(`/api/albums/${id}/tracks`);
+        const response = await fetch(`http://localhost:4000/api/songs/album/${id}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch tracks');
         setTracks(data);
@@ -78,7 +77,7 @@ const AlbumDetailsPage: React.FC = () => {
     const formData = new FormData();
     formData.append('cover', fileInputRef.current.files[0]);
     try {
-      const response = await fetch(`/api/albums/${id}/cover`, {
+      const response = await fetch(`http://localhost:4000/api/albums/${id}/cover`, {
         method: 'POST',
         body: formData,
       });
@@ -92,9 +91,22 @@ const AlbumDetailsPage: React.FC = () => {
     }
   };
 
+  // Function to extract filename without extension
+  const getFilenameWithoutExtension = (filename: string): string => {
+    return filename.replace(/\.[^/.]+$/, "");
+  };
+
   const handleTrackFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setAudioFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setAudioFile(file);
+      
+      // Auto-fill the title with filename (without extension)
+      const titleFromFilename = getFilenameWithoutExtension(file.name);
+      setTrackForm(prev => ({
+        ...prev,
+        title: titleFromFilename
+      }));
     }
   };
 
@@ -116,16 +128,23 @@ const AlbumDetailsPage: React.FC = () => {
     formData.append('genre', trackForm.genre);
     formData.append('year', trackForm.year);
     formData.append('track_number', trackForm.trackNumber);
-    formData.append('duration', trackForm.duration);
+    // Duration is now auto-detected by the backend, no need to send it
     formData.append('audio', audioFile);
     try {
-      const response = await fetch(`/api/albums/${id}/tracks`, {
+      const response = await fetch(`http://localhost:4000/api/albums/${id}/tracks`, {
         method: 'POST',
         body: formData,
       });
       if (!response.ok) throw new Error('Upload failed');
       setTrackDialogOpen(false);
       setAudioFile(null);
+      setTrackForm({
+        title: '',
+        artist: album?.artist || '',
+        genre: '',
+        year: '',
+        trackNumber: '',
+      });
       if (audioInputRef.current) audioInputRef.current.value = '';
       window.location.reload();
     } catch (err) {
@@ -145,7 +164,7 @@ const AlbumDetailsPage: React.FC = () => {
       track_number: track.track_number || track.number || 0,
       audioUrl: track.url ? `/uploads/${track.url.replace(/^\/+/, '')}` : '',
       album: album?.title || '',
-      albumArt: album ? `/api/albums/${album.id}/cover` : '',
+      albumArt: album ? `http://localhost:4000/api/albums/${album.id}/cover` : '',
     })),
     [tracks, album]
   );
@@ -170,7 +189,7 @@ const AlbumDetailsPage: React.FC = () => {
     <div className="flex min-h-screen bg-bg">
       <main className="flex-1 p-8 overflow-y-auto">
         <AlbumHeader
-          image={`/api/albums/${id}/cover?${Date.now()}`}
+          image={`http://localhost:4000/api/albums/${id}/cover?${Date.now()}`}
           title={album.title}
           artist={album.artist}
           year={album.year}
@@ -202,13 +221,20 @@ const AlbumDetailsPage: React.FC = () => {
                 setTrackDialogOpen(open);
                 if (!open) {
                   setAudioFile(null);
+                  setTrackForm({
+                    title: '',
+                    artist: album?.artist || '',
+                    genre: '',
+                    year: '',
+                    trackNumber: '',
+                  });
                   if (audioInputRef.current) audioInputRef.current.value = '';
                 }
               }}>
                 <DialogTrigger asChild>
                   <button className="bg-green-600 text-white px-2 py-1 text-xs rounded">Track Upload</button>
                 </DialogTrigger>
-                <DialogContent className="w-[400px] h-[530px] overflow-hidden py-6 px-6 text-xs">
+                <DialogContent className="w-[360px] h-[420px] overflow-hidden py-4 px-4 text-xs">
                   <DialogHeader className="py-1">
                     <DialogTitle className="text-base">Upload Track</DialogTitle>
                     <DialogDescription className="text-xs">Upload an mp3 or m4a file and fill in the details below.</DialogDescription>
@@ -219,11 +245,11 @@ const AlbumDetailsPage: React.FC = () => {
                       <input type="file" accept=".mp3,.m4a" ref={audioInputRef} onChange={handleTrackFileChange} className="border rounded p-1" />
                       {audioFile && <span className="text-xs text-green-400">Selected: {audioFile.name}</span>}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <input name="title" value={trackForm.title} onChange={handleTrackFormChange} placeholder="Track title" className="h-7 text-xs border rounded px-2" required />
                       <input name="artist" value={trackForm.artist} onChange={handleTrackFormChange} placeholder="Artist name" className="h-7 text-xs border rounded px-2" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <select name="genre" value={trackForm.genre} onChange={handleTrackFormChange} className="h-7 text-xs border rounded px-2">
                         <option value="">Select genre</option>
                         <option value="rock">Rock</option>
@@ -236,9 +262,8 @@ const AlbumDetailsPage: React.FC = () => {
                       </select>
                       <input name="year" value={trackForm.year} onChange={handleTrackFormChange} placeholder="Year" className="h-7 text-xs border rounded px-2" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 gap-2">
                       <input name="trackNumber" value={trackForm.trackNumber} onChange={handleTrackFormChange} placeholder="Track Number" className="h-7 text-xs border rounded px-2" />
-                      <input name="duration" value={trackForm.duration} onChange={handleTrackFormChange} placeholder="Duration (e.g. 3:45)" className="h-7 text-xs border rounded px-2" />
                     </div>
                     {trackError && <div className="text-red-500 text-center">{trackError}</div>}
                     <DialogFooter className="pt-1 gap-2">

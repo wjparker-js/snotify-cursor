@@ -16,12 +16,11 @@ export const handlers = {
         throw new Error('User ID is required for authentication');
       }
 
-      // Update user's last seen and connection status
+      // Update user's last seen (only updatedAt field exists in schema)
       await prisma.user.update({
         where: { id: userId },
         data: {
-          lastSeen: new Date(),
-          isConnected: true,
+          updatedAt: new Date(),
         },
       });
 
@@ -44,25 +43,19 @@ export const handlers = {
         throw new Error('User ID is required for presence update');
       }
 
-      // Update user's presence
+      // Update user's last activity (only updatedAt field exists in schema)
       await prisma.user.update({
         where: { id: userId },
         data: {
-          lastSeen: new Date(),
-          currentActivity,
+          updatedAt: new Date(),
         },
       });
 
-      // Broadcast presence update to followers
-      const followers = await prisma.follow.findMany({
-        where: { followingId: userId },
-        select: { followerId: true },
-      });
-
+      // TODO: Implement follow system - currently follow model doesn't exist in schema
+      // For now, we'll just log the presence update without broadcasting
       wsLogger.info('Presence updated', {
         userId,
         currentActivity,
-        followersCount: followers.length,
       });
 
       return {
@@ -71,7 +64,7 @@ export const handlers = {
           userId,
           currentActivity,
         },
-        broadcast: followers.map(f => f.followerId),
+        // broadcast: [], // No followers to broadcast to yet
       };
     } catch (error) {
       wsLogger.error('Presence update failed', {
@@ -89,25 +82,23 @@ export const handlers = {
         throw new Error('User ID is required for notification');
       }
 
-      // Create notification in database
-      const notification = await prisma.notification.create({
-        data: {
-          userId,
-          type,
-          message: data.message,
-          metadata: data.metadata,
-        },
-      });
-
-      wsLogger.info('Notification created', {
+      // TODO: Implement notification system - currently notification model doesn't exist in schema
+      // For now, we'll just log the notification without storing it
+      wsLogger.info('Notification requested', {
         userId,
-        notificationId: notification.id,
         type,
+        message: data.message,
       });
 
       return {
         type: 'notification',
-        data: notification,
+        data: {
+          id: Date.now(), // Temporary ID
+          userId,
+          type,
+          message: data.message,
+          createdAt: new Date(),
+        },
         broadcast: [userId],
       };
     } catch (error) {
@@ -126,42 +117,41 @@ export const handlers = {
         throw new Error('User ID is required for activity');
       }
 
-      // Create activity log
-      const activity = await prisma.activityLog.create({
-        data: {
-          userId,
-          type,
-          targetId: data.targetId,
-          metadata: data.metadata,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
-          },
+      // TODO: Implement activity log system - currently activityLog model doesn't exist in schema
+      // For now, we'll just log the activity without storing it
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
         },
       });
 
-      // Get followers for broadcasting
-      const followers = await prisma.follow.findMany({
-        where: { followingId: userId },
-        select: { followerId: true },
-      });
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const activity = {
+        id: Date.now(), // Temporary ID
+        userId,
+        type,
+        targetId: data.targetId,
+        metadata: data.metadata,
+        createdAt: new Date(),
+        user,
+      };
 
       wsLogger.info('Activity logged', {
         userId,
         activityId: activity.id,
         type,
-        followersCount: followers.length,
       });
 
       return {
         type: 'activity',
         data: activity,
-        broadcast: followers.map(f => f.followerId),
+        // broadcast: [], // No followers to broadcast to yet
       };
     } catch (error) {
       wsLogger.error('Activity logging failed', {
@@ -179,12 +169,11 @@ export const handlers = {
         throw new Error('User ID is required for disconnect');
       }
 
-      // Update user's connection status
+      // Update user's last activity time (only updatedAt field exists in schema)
       await prisma.user.update({
         where: { id: userId },
         data: {
-          isConnected: false,
-          lastSeen: new Date(),
+          updatedAt: new Date(),
         },
       });
 

@@ -32,7 +32,7 @@ const Album: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/albums/${id}`);
+        const response = await fetch(`http://localhost:4000/api/albums/${id}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch album');
         setAlbum(data);
@@ -52,7 +52,7 @@ const Album: React.FC = () => {
       setTracksLoading(true);
       setTracksError(null);
       try {
-        const response = await fetch(`/api/albums/${id}/tracks`);
+        const response = await fetch(`http://localhost:4000/api/albums/${id}/tracks`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch tracks');
         setTracks(data);
@@ -72,7 +72,7 @@ const Album: React.FC = () => {
       setRelatedLoading(true);
       setRelatedError(null);
       try {
-        const response = await fetch(`/api/albums?artist=${encodeURIComponent(album.artist)}`);
+        const response = await fetch(`http://localhost:4000/api/albums?artist=${encodeURIComponent(album.artist)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch related albums');
         // Exclude the current album from related
@@ -89,10 +89,22 @@ const Album: React.FC = () => {
   const getTrackAudioUrl = (audio_path: string | null | undefined) => {
     if (!audio_path) return '';
     if (/^https?:\/\//i.test(audio_path)) return audio_path;
-    return `http://localhost:4000/uploads/${audio_path.replace(/^\/+|\\/g, '/')}`;
+    return `http://localhost:4000/uploads/${audio_path.replace(/^\/+|\\+/g, '')}`;
   };
 
-  const coverUrl = id ? `/api/albums/${id}/cover?${Date.now()}` : '/placeholder.svg';
+  const getAlbumImageUrl = (image_url: string | null | undefined) => {
+    if (!image_url) return '/placeholder.svg';
+    // If the image_url is an absolute URL (http/https), use as is
+    if (/^https?:\/\//i.test(image_url)) return image_url;
+    // Otherwise, treat as relative and prefix with backend uploads URL
+    return `http://localhost:4000/uploads/${image_url.replace(/^\/+|\\+/g, '')}`;
+  };
+
+  const coverUrl = album?.image_url 
+    ? getAlbumImageUrl(album.image_url)
+    : id 
+      ? `http://localhost:4000/api/albums/${id}/cover?${Date.now()}` 
+      : '/placeholder.svg';
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -102,7 +114,7 @@ const Album: React.FC = () => {
     const formData = new FormData();
     formData.append('cover', fileInputRef.current.files[0]);
     try {
-      const response = await fetch(`/api/albums/${id}/cover`, {
+      const response = await fetch(`http://localhost:4000/api/albums/${id}/cover`, {
         method: 'POST',
         body: formData,
       });

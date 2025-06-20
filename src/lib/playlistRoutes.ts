@@ -51,7 +51,7 @@ router.get('/:id/cover', async (req: Request, res: Response) => {
 });
 
 // POST /api/playlists - create new playlist
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', upload.single('image'), async (req: Request, res: Response) => {
   try {
     const { name, description } = req.body;
     if (!name || name.trim().length === 0) {
@@ -60,7 +60,14 @@ router.post('/', async (req: Request, res: Response) => {
     if (name.length > 100) {
       return res.status(400).json({ error: 'Playlist name must be 100 characters or less' });
     }
-    const playlist = await playlistApi.createPlaylist(name.trim(), description || '');
+    
+    let playlist = await playlistApi.createPlaylist(name.trim(), description || '');
+    
+    // If image was uploaded, set it as cover
+    if (req.file) {
+      playlist = await playlistApi.setPlaylistCoverBlob(playlist.id.toString(), req.file.buffer);
+    }
+    
     res.status(201).json(playlist);
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to create playlist' });

@@ -1,31 +1,140 @@
 import prisma from '../integrations/mysql.js';
 
-// Fetch all tracks from MySQL using Prisma
-export async function getTracks() {
+// Fetch all songs from MySQL using Prisma
+export async function getSongs() {
   try {
-    const tracks = await prisma.track.findMany({
+    const songs = await prisma.song.findMany({
+      include: {
+        album: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
-    return tracks;
+    return songs;
   } catch (error: any) {
-    throw new Error('Failed to fetch tracks: ' + error.message);
+    throw new Error('Failed to fetch songs: ' + error.message);
   }
 }
 
-// TODO: Implement track CRUD using Prisma. These are stubs for future implementation.
-
-export async function getTrackById(trackId: number) {
-  throw new Error('Track fetching by ID is not implemented. Replace with Prisma logic.');
+// Fetch songs by album ID
+export async function getSongsByAlbum(albumId: number) {
+  try {
+    const songs = await prisma.song.findMany({
+      where: { albumId },
+      include: {
+        album: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return songs;
+  } catch (error: any) {
+    throw new Error('Failed to fetch songs for album: ' + error.message);
+  }
 }
 
-export async function createTrack(/* trackData */) {
-  throw new Error('Track creation is not implemented. Replace with Prisma logic.');
+// Fetch a single song by ID
+export async function getSongById(songId: number) {
+  try {
+    const song = await prisma.song.findUnique({
+      where: { id: songId },
+      include: {
+        album: true,
+      },
+    });
+    if (!song) {
+      throw new Error('Song not found');
+    }
+    return song;
+  } catch (error: any) {
+    throw new Error('Failed to fetch song: ' + error.message);
+  }
 }
 
-export async function updateTrack(/* trackId, trackData */) {
-  throw new Error('Track update is not implemented. Replace with Prisma logic.');
+// Create a new song
+export async function createSong(songData: {
+  title: string;
+  artist: string;
+  url: string;
+  albumId: number;
+  duration?: string;
+  genre?: string;
+}) {
+  try {
+    const song = await prisma.song.create({
+      data: {
+        title: songData.title,
+        artist: songData.artist,
+        url: songData.url,
+        albumId: songData.albumId,
+        duration: songData.duration || '0:00',
+        genre: songData.genre || 'Rock',
+      },
+      include: {
+        album: true,
+      },
+    });
+    return song;
+  } catch (error: any) {
+    throw new Error('Failed to create song: ' + error.message);
+  }
 }
 
-export async function deleteTrack(/* trackId */) {
-  throw new Error('Track deletion is not implemented. Replace with Prisma logic.');
-} 
+// Update a song
+export async function updateSong(songId: number, songData: {
+  title?: string;
+  artist?: string;
+  url?: string;
+  albumId?: number;
+  duration?: string;
+  genre?: string;
+}) {
+  try {
+    const song = await prisma.song.update({
+      where: { id: songId },
+      data: {
+        ...(songData.title && { title: songData.title }),
+        ...(songData.artist && { artist: songData.artist }),
+        ...(songData.url && { url: songData.url }),
+        ...(songData.albumId && { albumId: songData.albumId }),
+        ...(songData.duration && { duration: songData.duration }),
+        ...(songData.genre && { genre: songData.genre }),
+        updatedAt: new Date(),
+      },
+      include: {
+        album: true,
+      },
+    });
+    return song;
+  } catch (error: any) {
+    throw new Error('Failed to update song: ' + error.message);
+  }
+}
+
+// Delete a song
+export async function deleteSong(songId: number) {
+  try {
+    // First, remove the song from any playlists
+    await prisma.playlistsong.deleteMany({
+      where: { songId },
+    });
+
+    // Then delete any liked tracks
+    await prisma.likedtrack.deleteMany({
+      where: { songId },
+    });
+
+    // Finally, delete the song
+    const song = await prisma.song.delete({
+      where: { id: songId },
+    });
+    return song;
+  } catch (error: any) {
+    throw new Error('Failed to delete song: ' + error.message);
+  }
+}
+
+// For backward compatibility, export track functions that call song functions
+export const getTracks = getSongs;
+export const getTrackById = getSongById;
+export const createTrack = createSong;
+export const updateTrack = updateSong;
+export const deleteTrack = deleteSong; 

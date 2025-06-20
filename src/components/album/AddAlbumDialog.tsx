@@ -93,7 +93,7 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
       try {
         const coverFormData = new FormData();
         coverFormData.append('cover', imageFile);
-        const coverResponse = await fetch(`/api/albums/${album.id}/cover`, {
+        const coverResponse = await fetch(`http://localhost:4000/api/albums/${album.id}/cover`, {
           method: 'POST',
           body: coverFormData
         });

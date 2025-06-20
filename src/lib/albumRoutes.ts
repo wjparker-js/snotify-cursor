@@ -1,6 +1,6 @@
 import express from 'express';
 import type { Request, Response } from 'express';
-import { getAlbums } from './albumApi.js';
+import { getAlbums, getAlbumById, createAlbum, updateAlbum, deleteAlbum } from './albumApi.js';
 import fs from 'fs';
 import path from 'path';
 import prisma from '../integrations/mysql.js';
@@ -18,13 +18,31 @@ interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
 
-// Multer storage config for album images
+// Utility function to sanitize album title for folder name
+function sanitizeFolderName(title: string): string {
+  return title
+    .replace(/[<>:"/\\|?*]/g, '') // Remove invalid folder characters
+    .replace(/\s+/g, '_') // Replace spaces with underscores
+    .toLowerCase()
+    .trim();
+}
+
+// Multer storage config for album covers
 const storage = multer.diskStorage({
-  destination: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-    const albumId = req.params.id || 'temp';
-    const albumDir = path.join(UPLOADS_BASE_PATH, 'albums', albumId.toString());
-    fs.mkdirSync(albumDir, { recursive: true });
-    cb(null, albumDir);
+  destination: async (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+    try {
+      const { title } = req.body;
+      if (!title) {
+        return cb(new Error('Album title is required for upload'), '');
+      }
+      
+      const sanitizedTitle = sanitizeFolderName(title);
+      const albumDir = path.join(UPLOADS_BASE_PATH, 'albums', sanitizedTitle);
+      fs.mkdirSync(albumDir, { recursive: true });
+      cb(null, albumDir);
+    } catch (error) {
+      cb(error as Error, '');
+    }
   },
   filename: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
     const ext = path.extname(file.originalname);
@@ -35,14 +53,33 @@ const upload = multer({ storage });
 
 // Multer storage config for track audio files
 const trackStorage = multer.diskStorage({
-  destination: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-    const albumId = req.params.albumId;
-    const albumDir = path.join(UPLOADS_BASE_PATH, 'albums', albumId.toString());
-    fs.mkdirSync(albumDir, { recursive: true });
-    cb(null, albumDir);
+  destination: async (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+    try {
+      const albumId = parseInt(req.params.albumId, 10);
+      if (isNaN(albumId)) {
+        return cb(new Error('Invalid album ID'), '');
+      }
+      
+      // Fetch album to get the title
+      const album = await prisma.album.findUnique({ where: { id: albumId } });
+      if (!album) {
+        return cb(new Error('Album not found'), '');
+      }
+      
+      const sanitizedTitle = sanitizeFolderName(album.title);
+      const albumDir = path.join(UPLOADS_BASE_PATH, 'albums', sanitizedTitle, 'tracks');
+      fs.mkdirSync(albumDir, { recursive: true });
+      cb(null, albumDir);
+    } catch (error) {
+      cb(error as Error, '');
+    }
   },
   filename: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-    cb(null, file.originalname);
+    // Use timestamp + random number to avoid filename conflicts
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000000000);
+    const ext = path.extname(file.originalname);
+    cb(null, `${timestamp}-${random}${ext}`);
   },
 });
 const trackUpload = multer({ storage: trackStorage });
@@ -71,33 +108,28 @@ router.post('/', upload.single('image'), async (req: MulterRequest, res: Respons
     if (!title || !artist) {
       return res.status(400).json({ error: 'Title and artist are required' });
     }
-    let image_url = null;
-    const album = await prisma.album.create({
-      data: {
-        title,
-        artist,
-        image_url: image_url, // may be null for now
-        year,
-        track_count,
-        duration: duration || '',
-        description: description || '',
-        genre: genre || '',
-      },
+    
+    // Create album first
+    let album = await createAlbum({
+      title,
+      artist,
+      year,
+      track_count,
+      duration: duration || '',
+      description: description || '',
+      genre: genre || '',
     });
     
     // Update image_url with proper path structure after getting album ID
     if (req.file) {
-      image_url = `albums/${album.id}/${req.file.filename}`;
-      await prisma.album.update({ 
-        where: { id: album.id }, 
-        data: { image_url: image_url } 
-      });
-      album.image_url = image_url;
+      const sanitizedTitle = sanitizeFolderName(title);
+      const image_url = `albums/${sanitizedTitle}/${req.file.filename}`;
+      album = await updateAlbum(album.id, { image_url });
     } else {
       const placeholderUrl = `https://placehold.co/300x300.png?text=Album+${album.id}`;
-      await prisma.album.update({ where: { id: album.id }, data: { image_url: placeholderUrl } });
-      album.image_url = placeholderUrl;
+      album = await updateAlbum(album.id, { image_url: placeholderUrl });
     }
+    
     res.status(201).json(album);
   } catch (error) {
     console.error('Album creation error:', error);
@@ -118,17 +150,49 @@ router.get('/:id', async (req, res) => {
     if (isNaN(albumId)) {
       return res.status(400).json({ error: 'Invalid album id' });
     }
-    let album = await prisma.album.findUnique({ where: { id: albumId } });
-    if (!album) {
-      return res.status(404).json({ error: 'Album not found' });
-    }
+    let album = await getAlbumById(albumId);
     // If no image_url, set placeholder
     if (!album.image_url) {
       album.image_url = `https://placehold.co/300x300.png?text=Album+${album.id}`;
     }
     res.status(200).json(album);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error instanceof Error) {
+      res.status(404).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Unknown error' });
+    }
+  }
+});
+
+// PUT /:id - update an album
+router.put('/:id', async (req, res) => {
+  try {
+    const albumId = parseInt(req.params.id, 10);
+    if (isNaN(albumId)) {
+      return res.status(400).json({ error: 'Invalid album id' });
+    }
+    
+    const { title, artist, year, track_count, duration, description, genre, image_url } = req.body;
+    const updateData: any = {};
+    
+    if (title !== undefined) updateData.title = title;
+    if (artist !== undefined) updateData.artist = artist;
+    if (year !== undefined) updateData.year = year;
+    if (track_count !== undefined) updateData.track_count = track_count;
+    if (duration !== undefined) updateData.duration = duration;
+    if (description !== undefined) updateData.description = description;
+    if (genre !== undefined) updateData.genre = genre;
+    if (image_url !== undefined) updateData.image_url = image_url;
+    
+    const album = await updateAlbum(albumId, updateData);
+    res.status(200).json(album);
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(404).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Unknown error' });
+    }
   }
 });
 
@@ -140,18 +204,23 @@ router.post('/:albumId/tracks', trackUpload.single('audio'), async (req, res) =>
     if (!req.file || isNaN(albumId)) {
       return res.status(400).json({ error: 'Audio file and albumId are required' });
     }
+    
     // Fetch album to get the title
     const album = await prisma.album.findUnique({ where: { id: albumId } });
     if (!album) {
       return res.status(404).json({ error: 'Album not found' });
     }
-    const albumTitle = album.title || 'untitled_album';
+    
+    const sanitizedTitle = sanitizeFolderName(album.title);
+    
     // Use the title from the form, not the filename
     const title = req.body.title || req.file.originalname.replace(/\.[^/.]+$/, "");
-    const artist = req.body.artist || 'Unknown Artist';
+    const artist = req.body.artist || album.artist;
     const genre = req.body.genre || 'Rock';
-    // Store the relative path as albums/<albumId>/<filename>
-    const audioPath = `albums/${albumId}/${req.file.originalname}`;
+    
+    // Store the relative path as albums/<sanitized_title>/tracks/<filename>
+    const audioPath = `albums/${sanitizedTitle}/tracks/${req.file.filename}`;
+    
     // Derive duration from audio file
     let duration = '0:00';
     try {
@@ -165,6 +234,7 @@ router.post('/:albumId/tracks', trackUpload.single('audio'), async (req, res) =>
     } catch (err) {
       console.warn('Could not parse audio duration:', err);
     }
+    
     const song = await prisma.song.create({
       data: {
         title,
@@ -176,6 +246,7 @@ router.post('/:albumId/tracks', trackUpload.single('audio'), async (req, res) =>
         updatedAt: new Date(),
       },
     });
+    
     res.status(201).json(song);
   } catch (error) {
     console.error('Track upload error:', error, error?.stack);

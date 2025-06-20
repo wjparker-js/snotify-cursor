@@ -63,7 +63,7 @@ const UpdateAlbumArtDialog: React.FC<UpdateAlbumArtDialogProps> = ({
     try {
       const formData = new FormData();
       formData.append('cover', imageFile);
-      const response = await fetch(`/api/albums/${albumId}/cover`, {
+      const response = await fetch(`http://localhost:4000/api/albums/${albumId}/cover`, {
         method: 'POST',
         body: formData,
       });

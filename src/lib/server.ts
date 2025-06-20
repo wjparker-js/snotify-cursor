@@ -4,6 +4,7 @@ import cors from 'cors';
 import authRoutes from './authRoutes.js';
 import albumRoutes from './albumRoutes.js';
 import playlistRoutes from './playlistRoutes.js';
+import songRoutes from './songRoutes.js';
 import multer from 'multer';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -32,6 +33,7 @@ app.use('/uploads', express.static(path.resolve(UPLOADS_BASE_PATH_SERVER)));
 app.use('/api/auth', authRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/api/playlists', playlistRoutes);
+app.use('/api/songs', songRoutes);
 
 app.get('/api/auth/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'Auth server is running' });
