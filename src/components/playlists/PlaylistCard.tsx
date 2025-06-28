@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useImageCache } from '@/hooks/use-image-cache';
+import { Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface PlaylistCardProps {
   playlist: {
@@ -12,39 +13,26 @@ interface PlaylistCardProps {
 }
 
 export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
-  // Use the image cache hook for better performance
-  const { imageUrl: cachedImageUrl, isLoading: imageLoading, error: imageError } = useImageCache(playlist.cover);
-
   return (
-    <Link to={`/playlist/${playlist.id}`} className="block group w-full">
-      <div
-        className="bg-background rounded-lg shadow-md p-4 flex flex-col items-center group hover:shadow-lg transition-all w-full cursor-pointer"
-        style={{ overflow: 'hidden' }}
-        tabIndex={0}
-        role="button"
-        aria-label={`View playlist ${playlist.title} by ${playlist.owner}`}
-      >
-        <div className="relative w-full flex justify-center mb-3">
-          <div className="relative w-[85vw] max-w-[400px] sm:w-[116px] sm:h-[116px] aspect-square">
-            {imageLoading && (
-              <div className="absolute inset-0 bg-muted rounded-md flex items-center justify-center">
-                <div className="text-muted-foreground text-xs">Loading...</div>
-              </div>
-            )}
-            <img
-              src={cachedImageUrl}
-              alt={playlist.title}
-              className={`w-full h-full object-cover rounded-md transition-opacity duration-200 ${
-                !imageLoading ? 'opacity-100' : 'opacity-0'
-              }`}
-              loading="eager"
-            />
+    <Link to={`/playlist/${playlist.id}`} className="block group">
+      <div className="bg-card rounded-lg p-4 hover:bg-accent/50 transition-colors">
+        <div className="aspect-square mb-3 relative">
+          <img
+            src={playlist.cover}
+            alt={playlist.title}
+            className="w-full h-full object-cover rounded-md"
+            onError={(e) => {
+              e.currentTarget.src = '/placeholder.svg';
+            }}
+          />
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+            <Button size="sm" className="bg-primary hover:bg-primary/90">
+              <Play className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-        <div className="w-full text-center">
-          <h3 className="font-semibold text-base truncate">{playlist.title}</h3>
-          <p className="text-sm text-muted-foreground truncate">{playlist.owner}</p>
-        </div>
+        <h3 className="font-medium text-sm mb-1 line-clamp-1">{playlist.title}</h3>
+        <p className="text-muted-foreground text-xs line-clamp-1">{playlist.owner}</p>
       </div>
     </Link>
   );

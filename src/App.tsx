@@ -25,6 +25,7 @@ import { ToastProvider } from "@/hooks/use-toast";
 import AlbumDetailsPage from './pages/albums/[id]';
 import { MediaPlayerProvider } from '@/contexts/MediaPlayerContext';
 import MediaPlayer from '@/components/player/MediaPlayer';
+import { PerformanceMonitor } from '@/components/ui/performance-monitor';
 
 // Create a new query client
 const queryClient = new QueryClient({
@@ -89,6 +90,7 @@ const App = () => {
                     {shouldShowMediaPlayer && <MediaPlayer />}
                     <Toaster />
                     <Sonner />
+                    <PerformanceMonitor />
                   </div>
                 </SidebarProvider>
               </TooltipProvider>

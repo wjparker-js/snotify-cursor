@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, useRef, ReactNode, useEffect, useCallback, useMemo } from 'react';
 
 interface Track {
   id: string;
@@ -110,7 +110,7 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [isPlaying]);
 
-  const playTrack = (track: Track, newPlaylist?: Track[], source?: QueueItem['source'], sourceId?: string) => {
+  const playTrack = useCallback((track: Track, newPlaylist?: Track[], source?: QueueItem['source'], sourceId?: string) => {
     if (!audioRef.current) return;
     audioRef.current.src = track.audioUrl;
     audioRef.current.volume = isMuted ? 0 : volume;
@@ -129,24 +129,24 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     }).catch(error => {
       console.error('Error playing track:', error);
     });
-  };
+  }, [isMuted, volume, playlist]);
 
-  const addToQueue = (track: Track, source?: QueueItem['source'], sourceId?: string) => {
+  const addToQueue = useCallback((track: Track, source?: QueueItem['source'], sourceId?: string) => {
     setQueue(prev => [...prev, {
       track,
       source: source || 'search',
       sourceId,
       addedAt: new Date()
     }]);
-  };
+  }, []);
 
-  const removeFromQueue = (index: number) => {
+  const removeFromQueue = useCallback((index: number) => {
     setQueue(prev => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const clearQueue = () => {
+  const clearQueue = useCallback(() => {
     setQueue([]);
-  };
+  }, []);
 
   const playNext = () => {
     if (queue.length > 0) {
@@ -304,33 +304,47 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     setProgress(position);
   };
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    currentTrack,
+    isPlaying,
+    volume,
+    isMuted,
+    progress,
+    playlist,
+    queue,
+    currentIndex,
+    playTrack,
+    pauseTrack,
+    resumeTrack,
+    setVolume,
+    toggleMute,
+    seekTo,
+    isVisible,
+    setIsVisible,
+    playNext,
+    playPrevious,
+    addToQueue,
+    removeFromQueue,
+    clearQueue,
+    shareTrack
+  }), [
+    currentTrack,
+    isPlaying,
+    volume,
+    isMuted,
+    progress,
+    playlist,
+    queue,
+    currentIndex,
+    playTrack,
+    addToQueue,
+    removeFromQueue,
+    clearQueue
+  ]);
+
   return (
-    <MediaPlayerContext.Provider
-      value={{
-        currentTrack,
-        isPlaying,
-        volume,
-        isMuted,
-        progress,
-        playlist,
-        queue,
-        currentIndex,
-        playTrack,
-        pauseTrack,
-        resumeTrack,
-        setVolume,
-        toggleMute,
-        seekTo,
-        isVisible,
-        setIsVisible,
-        playNext,
-        playPrevious,
-        addToQueue,
-        removeFromQueue,
-        clearQueue,
-        shareTrack
-      }}
-    >
+    <MediaPlayerContext.Provider value={contextValue}>
       {children}
       <audio ref={audioRef} style={{ display: 'none' }} />
     </MediaPlayerContext.Provider>

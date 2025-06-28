@@ -55,7 +55,7 @@ const AccountButton: React.FC = () => {
           <Button 
             size="sm" 
             variant="ghost" 
-            className="rounded-full w-auto p-0 h-auto hover:bg-transparent"
+            className="rounded-full w-auto p-0 h-auto hover:bg-transparent text-white hover:text-theme-color transition-colors"
           >
             <User size={18} />
           </Button>
@@ -82,7 +82,7 @@ const AccountButton: React.FC = () => {
       <Button 
         size="sm" 
         variant="ghost" 
-        className="rounded-full w-auto p-0 h-auto hover:bg-transparent"
+        className="rounded-full w-auto p-0 h-auto hover:bg-transparent text-white hover:text-theme-color transition-colors"
         onClick={() => setShowAuthDialog(true)}
       >
         <User size={18} />

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -104,7 +103,7 @@ const BlogItem: React.FC<BlogItemProps> = ({ article, onDeleted }) => {
         </div>
         
         <div className="flex flex-col min-w-0 pr-6">
-          <span className="text-sm font-medium text-white truncate group-hover:text-orange-600 transition-colors">
+          <span className="text-sm font-medium text-white truncate group-hover:text-theme-color transition-colors">
             {article.title}
           </span>
           <div className="flex items-center text-xs text-spotify-text-secondary">

@@ -2,11 +2,6 @@ import React from 'react';
 import { Play, Shuffle, Heart, MoreHorizontal, Download } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const getAlbumImageUrl = (image_url: string | null | undefined) => {
-  if (!image_url) return '/placeholder.svg';
-  return image_url;
-};
-
 interface AlbumHeaderProps {
   image: string;
   title: string;
@@ -16,6 +11,7 @@ interface AlbumHeaderProps {
   duration: string;
   actions?: React.ReactNode;
 }
+
 const AlbumHeader: React.FC<AlbumHeaderProps> = ({
   image,
   title,
@@ -26,7 +22,8 @@ const AlbumHeader: React.FC<AlbumHeaderProps> = ({
   actions
 }) => {
   const isMobile = useIsMobile(768);
-  const imageUrl = getAlbumImageUrl(image);
+  // Use the image URL directly as it's already properly formatted
+  const imageUrl = image || '/placeholder.svg';
 
   return <div className="bg-gradient-to-b from-zinc-700/40 to-spotify-background p-2 md:p-3 w-full px-0 relative">
       {isMobile ?
@@ -37,12 +34,26 @@ const AlbumHeader: React.FC<AlbumHeaderProps> = ({
           {/* Center the album art properly with larger dimensions on mobile */}
           <div className="flex justify-center w-full mb-1">
             <div className="flex justify-center items-center w-[85vw] max-w-[400px] aspect-square">
-              <img src={imageUrl} alt={title} className="shadow-xl object-cover rounded-md w-full h-full" />
+              <img 
+                src={imageUrl} 
+                alt={title} 
+                className="shadow-xl object-cover rounded-md w-full h-full"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
+              />
             </div>
           </div>
           <div className="w-full flex flex-col items-center mt-1 gap-1">
             <div className="flex items-center gap-1 text-xs">
-              <img src={imageUrl} alt={artist} className="w-4 h-4 rounded-full object-cover" />
+              <img 
+                src={imageUrl} 
+                alt={artist} 
+                className="w-4 h-4 rounded-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
+              />
               <span className="font-medium hover:underline cursor-pointer">{artist}</span>
               {year && <>
                   <span className="text-spotify-text-secondary mx-1">•</span>
@@ -62,13 +73,28 @@ const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     // Desktop layout - horizontal alignment with reduced height
     <div className="flex items-center gap-3 py-[10px] px-[10px] relative">
           <div className="flex justify-center items-center" style={{ width: 145, height: 145 }}>
-            <img src={imageUrl} alt={title} className="shadow-xl object-cover rounded-md" style={{ width: 145, height: 145, maxWidth: '100%', maxHeight: '100%' }} />
+            <img 
+              src={imageUrl} 
+              alt={title} 
+              className="shadow-xl object-cover rounded-md" 
+              style={{ width: 145, height: 145, maxWidth: '100%', maxHeight: '100%' }}
+              onError={(e) => {
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
           </div>
           <div className="flex flex-col gap-0">
             <span className="text-xs font-medium">Album</span>
             <h1 className="text-lg sm:text-xl font-bold">{title}</h1>
             <div className="flex items-center gap-1 text-xs">
-              <img src={imageUrl} alt={artist} className="w-4 h-4 rounded-full object-cover" />
+              <img 
+                src={imageUrl} 
+                alt={artist} 
+                className="w-4 h-4 rounded-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
+              />
               <span className="font-medium hover:underline cursor-pointer">{artist}</span>
               {year && <>
                   <span className="text-spotify-text-secondary mx-1">•</span>
@@ -88,4 +114,5 @@ const AlbumHeader: React.FC<AlbumHeaderProps> = ({
         </div>}
     </div>;
 };
+
 export default AlbumHeader;

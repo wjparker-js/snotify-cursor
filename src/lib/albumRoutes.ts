@@ -338,37 +338,42 @@ router.get('/:id/cover', async (req, res) => {
     const album = await prisma.album.findUnique({ where: { id: albumId } });
     if (!album) return res.status(404).send('Album not found');
     
+    const sanitizedTitle = sanitizeFolderName(album.title);
+    const albumDir = path.join(UPLOADS_BASE_PATH, 'albums', sanitizedTitle);
+    
+    // Look for any cover file in the album directory
+    const coverExtensions = ['.jfif', '.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    let coverFile = null;
+    
+    for (const ext of coverExtensions) {
+      const coverPath = path.join(albumDir, `cover${ext}`);
+      if (fs.existsSync(coverPath)) {
+        coverFile = coverPath;
+        break;
+      }
+    }
+    
+    if (!coverFile) {
+      return res.status(404).send('No cover image found');
+    }
+    
     // Set cache headers for better performance
     res.set({
-      'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
-      'ETag': `"album-${albumId}-${album.updatedAt.getTime()}"`,
-      'Last-Modified': album.updatedAt.toUTCString()
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'ETag': `"album-${albumId}-${fs.statSync(coverFile).mtime.getTime()}"`,
+      'Last-Modified': fs.statSync(coverFile).mtime.toUTCString()
     });
     
     // Check if client has cached version
     const ifNoneMatch = req.headers['if-none-match'];
-    const etag = `"album-${albumId}-${album.updatedAt.getTime()}"`;
+    const etag = `"album-${albumId}-${fs.statSync(coverFile).mtime.getTime()}"`;
     if (ifNoneMatch === etag) {
       return res.status(304).send(); // Not modified
     }
     
-    // If we have image_url, serve the file
-    if (album.image_url && !album.image_url.startsWith('http')) {
-      const filePath = path.join(UPLOADS_BASE_PATH, album.image_url);
-      if (fs.existsSync(filePath)) {
-        return res.sendFile(path.resolve(filePath));
-      }
-    }
-    
-    // Fallback to blob if it exists (for legacy data)
-    if (album.cover_blob) {
-      res.set('Content-Type', 'image/jpeg');
-      return res.send(Buffer.from(album.cover_blob));
-    }
-    
-    // No cover found
-    return res.status(404).send('No cover image');
+    return res.sendFile(path.resolve(coverFile));
   } catch (error) {
+    console.error('Album cover error:', error);
     res.status(500).send('Failed to fetch cover image');
   }
 });

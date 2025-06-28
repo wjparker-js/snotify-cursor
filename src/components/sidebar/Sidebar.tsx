@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Disc, ListMusic } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { getApiUrl } from '@/lib/config';
 
 interface Album {
   id: number;
@@ -46,25 +45,28 @@ const Sidebar: React.FC = () => {
     };
   };
 
-  // Fetch albums data
-  const fetchAlbums = async () => {
+  // Memoize fetch functions to prevent recreation on every render
+  const fetchAlbums = useCallback(async () => {
     try {
-      const response = await fetch(getApiUrl('/api/albums'), {
+      const response = await fetch('/api/albums', {
         headers: {
           'ngrok-skip-browser-warning': 'true'
-        }
+        },
+        signal: AbortSignal.timeout(10000)
       });
       const data = await response.json();
       if (response.ok) {
-        setAlbums(data);
+        setAlbums(Array.isArray(data) ? data : []);
       }
-    } catch (error) {
-      console.error('Failed to fetch albums:', error);
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Failed to fetch albums:', error);
+      }
     }
-  };
+  }, []);
 
   // Fetch playlists data
-  const fetchPlaylists = async () => {
+  const fetchPlaylists = useCallback(async () => {
     try {
       // Only fetch playlists if user is authenticated
       if (!user) {
@@ -72,21 +74,24 @@ const Sidebar: React.FC = () => {
         return;
       }
 
-      const response = await fetch(getApiUrl('/api/playlists'), {
-        headers: getAuthHeaders()
+      const response = await fetch('/api/playlists', {
+        headers: getAuthHeaders(),
+        signal: AbortSignal.timeout(10000)
       });
       const data = await response.json();
       if (response.ok) {
-        setPlaylists(data);
+        setPlaylists(Array.isArray(data) ? data : []);
       } else {
         console.error('Failed to fetch playlists:', data.error);
         setPlaylists([]);
       }
-    } catch (error) {
-      console.error('Failed to fetch playlists:', error);
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Failed to fetch playlists:', error);
+      }
       setPlaylists([]);
     }
-  };
+  }, [user]);
 
   // Load data on component mount and when user changes
   useEffect(() => {
@@ -109,7 +114,7 @@ const Sidebar: React.FC = () => {
   };
 
   const handleAlbumClick = (albumId: number) => {
-    navigate(`/albums/${albumId}`);
+    navigate(`/album/${albumId}`);
   };
 
   const handlePlaylistClick = (playlistId: number) => {
@@ -117,11 +122,11 @@ const Sidebar: React.FC = () => {
   };
 
   const getAlbumCoverUrl = (albumId: number) => {
-    return getApiUrl(`/api/albums/${albumId}/cover`);
+    return `/api/albums/${albumId}/cover?v=${Date.now()}`;
   };
 
   const getPlaylistCoverUrl = (playlistId: number) => {
-    return getApiUrl(`/api/playlists/${playlistId}/cover`);
+    return `/api/playlists/${playlistId}/cover?v=${Date.now()}`;
   };
 
   if (isLoading) {
@@ -156,7 +161,7 @@ const Sidebar: React.FC = () => {
           onClick={() => handleTabChange('albums')}
           className={`flex items-center justify-center flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
             activeTab === 'albums'
-              ? 'bg-orange-600 text-white shadow-sm'
+              ? 'bg-theme-color text-white shadow-sm'
               : 'text-gray-400 hover:text-white hover:bg-gray-700'
           }`}
         >
@@ -167,7 +172,7 @@ const Sidebar: React.FC = () => {
           onClick={() => handleTabChange('playlists')}
           className={`flex items-center justify-center flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
             activeTab === 'playlists'
-              ? 'bg-orange-600 text-white shadow-sm'
+              ? 'bg-theme-color text-white shadow-sm'
               : 'text-gray-400 hover:text-white hover:bg-gray-700'
           }`}
         >

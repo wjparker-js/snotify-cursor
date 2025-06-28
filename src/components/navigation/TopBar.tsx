@@ -1,10 +1,11 @@
 import React from 'react';
-import { Settings, User } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import AccountButton from '@/components/auth/AccountButton';
 import { Link } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TopBarProps {}
 
@@ -30,18 +31,33 @@ const TopBar: React.FC<TopBarProps> = () => {
       
       <div className="flex items-center gap-2 pr-5">
         {user && (
-          <>
-            <Link to="/profile" className="text-white hover:text-theme-color transition-colors">
-              <User size={14} />
-            </Link>
-            <Link to="/settings" className="text-white hover:text-theme-color transition-colors">
-              <Settings size={14} />
-            </Link>
-          </>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link to="/settings" className="text-white hover:text-theme-color transition-colors">
+                  <Settings size={14} />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Settings</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         
         <div className="text-white">
-          <AccountButton />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <AccountButton />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{user?.name || user?.email || 'Profile'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </div>

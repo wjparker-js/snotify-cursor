@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import AlbumHeader from '@/components/album/AlbumHeader';
 import TrackList from '@/components/shared/TrackList';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { getUploadsUrl, getApiUrl } from '@/lib/config';
+import { getUploadsUrl } from '@/lib/config';
 
 // TODO: Implement single playlist functionality using MySQL/Prisma. Supabase logic removed.
 
@@ -45,7 +45,7 @@ const Playlist: React.FC = () => {
     artist: ps.song.artist,
     duration: ps.song.duration || 0,
     audioUrl: ps.song.url ? getUploadsUrl(ps.song.url) : '',
-    albumArt: ps.song.albumId ? getApiUrl(`/api/albums/${ps.song.albumId}/cover`) : '/placeholder.svg',
+    albumArt: ps.song.albumId ? `/api/albums/${ps.song.albumId}/cover` : '/placeholder.svg',
     position: index + 1,
   })) || [];
 
@@ -55,7 +55,7 @@ const Playlist: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(getApiUrl(`/api/playlists/${id}`));
+        const response = await fetch(`/api/playlists/${id}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch playlist');
         setPlaylist(data);
@@ -68,17 +68,17 @@ const Playlist: React.FC = () => {
     fetchPlaylist();
   }, [id]);
 
-  const coverUrl = id ? getApiUrl(`/api/playlists/${id}/cover?${Date.now()}`) : '/placeholder.svg';
+  const coverUrl = id ? `/api/playlists/${id}/cover?t=${Date.now()}` : '/placeholder.svg';
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !id) return;
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!fileInputRef.current?.files?.[0] || !id) return;
     setUploading(true);
     setError(null);
     const formData = new FormData();
-    formData.append('cover', file);
+    formData.append('cover', fileInputRef.current.files[0]);
     try {
-      const response = await fetch(getApiUrl(`/api/playlists/${id}/cover`), {
+      const response = await fetch(`/api/playlists/${id}/cover`, {
         method: 'POST',
         body: formData,
       });
@@ -97,36 +97,43 @@ const Playlist: React.FC = () => {
   if (!playlist) return <div className="text-muted text-center py-12">Playlist not found.</div>;
 
   return (
-    <div className="p-6">
-      <AlbumHeader
-        image={coverUrl}
-        title={playlist.name}
-        artist={playlist.user?.name || 'Unknown'}
-        year={''}
-        trackCount={tracks.length.toString()}
-        duration={''}
-      />
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogTrigger asChild>
-          <button className="bg-blue-600 text-white px-3 py-1 rounded my-4">Upload/Change Cover</button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Upload Playlist Cover</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); handleUpload(e as React.ChangeEvent<HTMLInputElement>); }} className="flex flex-col gap-4">
-            <input type="file" accept="image/*" ref={fileInputRef} className="border rounded p-1" onChange={handleUpload} />
-            {error && <div className="text-red-500 text-center">{error}</div>}
-            <DialogFooter>
-              <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded" disabled={uploading}>{uploading ? 'Uploading...' : 'Upload Cover'}</button>
-              <DialogClose asChild>
-                <button type="button" className="bg-gray-300 text-black px-3 py-1 rounded">Cancel</button>
-              </DialogClose>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <TrackList tracks={tracks} />
+    <div className="flex min-h-screen bg-bg">
+      <main className="flex-1 p-8 overflow-y-auto">
+        <AlbumHeader
+          image={coverUrl}
+          title={playlist.name}
+          artist={playlist.user?.name || 'Unknown'}
+          year={''}
+          trackCount={tracks.length.toString()}
+          duration={''}
+          actions={
+            <>
+              <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                <DialogTrigger asChild>
+                  <button className="bg-theme-color text-white px-2 py-1 text-xs rounded">Upload/Change Cover</button>
+                </DialogTrigger>
+                <DialogContent className="w-[400px] h-[530px] overflow-hidden py-6 px-6 text-xs">
+                  <DialogHeader className="py-1">
+                    <DialogTitle className="text-base">Upload Playlist Cover</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleUpload} className="flex flex-col gap-4">
+                    <input type="file" accept="image/*" ref={fileInputRef} className="border rounded p-1" />
+                    {error && <div className="text-red-500 text-center">{error}</div>}
+                    <DialogFooter>
+                      <button type="submit" className="bg-theme-color text-white px-2 py-1 text-xs rounded" disabled={uploading}>{uploading ? 'Uploading...' : 'Upload Cover'}</button>
+                      <DialogClose asChild>
+                        <button type="button" className="bg-gray-300 text-black px-2 py-1 text-xs rounded">Cancel</button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </>
+          }
+        />
+        <h2 className="text-xl font-semibold mb-4 text-text">Tracks</h2>
+        <TrackList tracks={tracks} />
+      </main>
     </div>
   );
 };

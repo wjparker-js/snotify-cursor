@@ -31,9 +31,9 @@ const MobileTopBar: React.FC = () => {
       <div className="flex bg-gray-800 rounded-lg p-1">
         <button
           onClick={() => handleTabChange('albums')}
-          className={`flex items-center justify-center flex-1 py-1 px-2 rounded-md text-xs font-medium transition-all duration-200 ${
+          className={`flex items-center justify-center flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
             activeTab === 'albums'
-              ? 'bg-orange-600 text-white shadow-sm'
+              ? 'bg-theme-color text-white shadow-sm'
               : 'text-gray-400 hover:text-white hover:bg-gray-700'
           }`}
         >
@@ -42,9 +42,9 @@ const MobileTopBar: React.FC = () => {
         </button>
         <button
           onClick={() => handleTabChange('playlists')}
-          className={`flex items-center justify-center flex-1 py-1 px-2 rounded-md text-xs font-medium transition-all duration-200 ${
+          className={`flex items-center justify-center flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
             activeTab === 'playlists'
-              ? 'bg-orange-600 text-white shadow-sm'
+              ? 'bg-theme-color text-white shadow-sm'
               : 'text-gray-400 hover:text-white hover:bg-gray-700'
           }`}
         >

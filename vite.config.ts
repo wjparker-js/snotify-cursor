@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => ({
       '/api': {
         target: 'http://localhost:4000',
         changeOrigin: true,
+        timeout: 5000,
         headers: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -33,6 +34,7 @@ export default defineConfig(({ mode }) => ({
       '/uploads': {
         target: 'http://localhost:4000',
         changeOrigin: true,
+        timeout: 5000,
         headers: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -40,25 +42,51 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500,
+    target: 'esnext',
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
+            // Separate large UI libraries
             if (id.includes('@radix-ui')) {
               return 'vendor-radix';
             }
             if (id.includes('@tiptap')) {
               return 'vendor-tiptap';
             }
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            // Group other vendor libraries
             return 'vendor';
+          }
+          // Separate our own components by feature
+          if (id.includes('/components/ui/')) {
+            return 'ui-components';
+          }
+          if (id.includes('/components/player/') || id.includes('/contexts/MediaPlayerContext')) {
+            return 'player';
+          }
+          if (id.includes('/components/album/') || id.includes('/pages/Album')) {
+            return 'album';
           }
         },
       },
     },
   },
   plugins: [
-    react()
+    react({
+      // Enable React Fast Refresh for better dev experience
+      fastRefresh: true,
+    })
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -72,11 +100,25 @@ export default defineConfig(({ mode }) => ({
       '@tiptap/extension-text-align',
       '@tiptap/react',
       '@tiptap/starter-kit',
+      'react',
+      'react-dom',
+      '@tanstack/react-query',
+      'lucide-react',
     ],
     esbuildOptions: {
       define: {
         global: 'globalThis'
-      }
+      },
+      target: 'esnext'
     }
+  },
+  esbuild: {
+    // Enable tree shaking and dead code elimination
+    treeShaking: true,
+    // Optimize for speed in development
+    ...(mode === 'development' && {
+      target: 'esnext',
+      format: 'esm'
+    })
   }
 }));

@@ -18,6 +18,8 @@ class ImageCache {
     if (entry) {
       // Check if cache entry is still valid
       if (Date.now() - entry.timestamp < this.maxAge) {
+        // Update access time for LRU behavior
+        entry.timestamp = Date.now();
         return entry.objectUrl;
       } else {
         // Clean up expired entry

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -6,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { useTheme } from "@/context/ThemeContext";
 import { Separator } from "@/components/ui/separator";
 import { Moon, Sun, Palette, UserX } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from '@/context/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -75,71 +73,39 @@ const Settings = () => {
                       </div>
                     </div>
                     
-                    <RadioGroup 
-                      value={colorTheme} 
-                      onValueChange={(value) => setColorTheme(value as 'orange' | 'blue' | 'green' | 'purple')}
-                      className="flex flex-wrap gap-3"
-                    >
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center justify-center">
-                          <RadioGroupItem 
-                            value="orange" 
-                            id="orange" 
-                            className="sr-only peer" 
-                          />
-                          <Label 
-                            htmlFor="orange" 
-                            className="size-8 rounded-full bg-orange-700 cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-ring peer-data-[state=checked]:ring-offset-2" 
-                          />
-                        </div>
+                    <div className="flex flex-wrap gap-3">
+                      <div 
+                        className={`flex flex-col items-center gap-1 cursor-pointer ${colorTheme === 'orange' ? 'ring-2 ring-ring ring-offset-2 rounded-lg p-1' : ''}`}
+                        onClick={() => setColorTheme('orange')}
+                      >
+                        <div className="size-8 rounded-full bg-orange-700" />
                         <span className="text-xs">Orange</span>
                       </div>
                       
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center justify-center">
-                          <RadioGroupItem 
-                            value="blue" 
-                            id="blue" 
-                            className="sr-only peer" 
-                          />
-                          <Label 
-                            htmlFor="blue" 
-                            className="size-8 rounded-full bg-blue-600 cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-ring peer-data-[state=checked]:ring-offset-2" 
-                          />
-                        </div>
+                      <div 
+                        className={`flex flex-col items-center gap-1 cursor-pointer ${colorTheme === 'blue' ? 'ring-2 ring-ring ring-offset-2 rounded-lg p-1' : ''}`}
+                        onClick={() => setColorTheme('blue')}
+                      >
+                        <div className="size-8 rounded-full bg-blue-600" />
                         <span className="text-xs">Blue</span>
                       </div>
                       
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center justify-center">
-                          <RadioGroupItem 
-                            value="green" 
-                            id="green" 
-                            className="sr-only peer" 
-                          />
-                          <Label 
-                            htmlFor="green" 
-                            className="size-8 rounded-full bg-green-600 cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-ring peer-data-[state=checked]:ring-offset-2" 
-                          />
-                        </div>
+                      <div 
+                        className={`flex flex-col items-center gap-1 cursor-pointer ${colorTheme === 'green' ? 'ring-2 ring-ring ring-offset-2 rounded-lg p-1' : ''}`}
+                        onClick={() => setColorTheme('green')}
+                      >
+                        <div className="size-8 rounded-full bg-green-600" />
                         <span className="text-xs">Green</span>
                       </div>
                       
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center justify-center">
-                          <RadioGroupItem 
-                            value="purple" 
-                            id="purple" 
-                            className="sr-only peer" 
-                          />
-                          <Label 
-                            htmlFor="purple" 
-                            className="size-8 rounded-full bg-purple-600 cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-ring peer-data-[state=checked]:ring-offset-2" 
-                          />
-                        </div>
+                      <div 
+                        className={`flex flex-col items-center gap-1 cursor-pointer ${colorTheme === 'purple' ? 'ring-2 ring-ring ring-offset-2 rounded-lg p-1' : ''}`}
+                        onClick={() => setColorTheme('purple')}
+                      >
+                        <div className="size-8 rounded-full bg-purple-600" />
                         <span className="text-xs">Purple</span>
                       </div>
-                    </RadioGroup>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -171,3 +137,4 @@ const Settings = () => {
 };
 
 export default Settings;
+
