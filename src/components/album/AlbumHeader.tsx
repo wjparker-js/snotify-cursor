@@ -34,10 +34,10 @@ const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     <div className="w-full flex flex-col items-center text-center">
           {actions && <div className="w-full flex justify-end mb-2">{actions}</div>}
           <h1 className="text-xl sm:text-2xl font-bold mb-1">{title}</h1>
-          {/* Center the album art properly with reduced dimensions */}
+          {/* Center the album art properly with larger dimensions on mobile */}
           <div className="flex justify-center w-full mb-1">
-            <div className="flex justify-center items-center" style={{ width: 145, height: 145 }}>
-              <img src={imageUrl} alt={title} className="shadow-xl object-cover rounded-md" style={{ width: 145, height: 145, maxWidth: '100%', maxHeight: '100%' }} />
+            <div className="flex justify-center items-center w-[85vw] max-w-[400px] aspect-square">
+              <img src={imageUrl} alt={title} className="shadow-xl object-cover rounded-md w-full h-full" />
             </div>
           </div>
           <div className="w-full flex flex-col items-center mt-1 gap-1">

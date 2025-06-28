@@ -1,9 +1,20 @@
 import express from 'express';
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { validateRegistration, validateLogin, registerUser, loginUser, refreshToken, logoutUser, forgotPassword, verifyEmail, getUserProfile, updateUserProfile, deactivateUser, getUserTenants, switchUserTenant, createRefreshToken, verifyJWT } from './authApi.js';
+import { 
+  verifyJWT, 
+  refreshToken, 
+  logoutUser, 
+  forgotPassword, 
+  verifyEmail, 
+  getUserProfile, 
+  updateUserProfile, 
+  deactivateUser, 
+  getUserTenants, 
+  switchUserTenant 
+} from './authApi.js';
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -11,6 +22,29 @@ interface AuthenticatedRequest extends Request {
 
 const router = express.Router();
 const prisma = new PrismaClient();
+
+
+
+// Simple validation functions
+function validateRegistration(data: any) {
+  if (!data.email || !data.password) {
+    return 'Email and password are required';
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    return 'Invalid email format';
+  }
+  if (data.password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+  return null;
+}
+
+function validateLogin(data: any) {
+  if (!data.email || !data.password) {
+    return 'Email and password are required';
+  }
+  return null;
+}
 
 // Register endpoint
 router.post('/register', async (req: Request, res: Response) => {
@@ -20,20 +54,15 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ error: validationError });
     }
 
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
 
     // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username },
-          { email }
-        ]
-      }
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'Username or email already exists' });
+      return res.status(400).json({ error: 'Email already exists' });
     }
 
     // Hash password
@@ -42,7 +71,6 @@ router.post('/register', async (req: Request, res: Response) => {
     // Create user
     const user = await prisma.user.create({
       data: {
-        username,
         email,
         password: hashedPassword
       }
@@ -60,8 +88,12 @@ router.post('/register', async (req: Request, res: Response) => {
       token,
       user: {
         id: user.id,
-        username: user.username,
-        email: user.email
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        bio: user.bio,
+        preferences: user.preferences,
+        emailVerified: user.emailVerified
       }
     });
   } catch (error) {
@@ -91,6 +123,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // Check password
     const validPassword = await bcrypt.compare(password, user.password);
+    
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -107,8 +140,12 @@ router.post('/login', async (req: Request, res: Response) => {
       token,
       user: {
         id: user.id,
-        username: user.username,
-        email: user.email
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        bio: user.bio,
+        preferences: user.preferences,
+        emailVerified: user.emailVerified
       }
     });
   } catch (error) {
@@ -236,6 +273,11 @@ router.post('/users/switch-tenant', requireAuth, async (req: AuthenticatedReques
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
+});
+
+// Health check endpoint
+router.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', message: 'Auth server is running' });
 });
 
 export default router; 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
+import { getApiUrl } from '@/lib/config';
 
 interface AuthUser {
   id: number;
@@ -38,9 +39,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:4000/api/auth/login', {
+      const response = await fetch(getApiUrl('/api/auth/login'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
@@ -60,9 +64,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:4000/api/auth/register', {
+      const response = await fetch(getApiUrl('/api/auth/register'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ListPlus, Plus } from 'lucide-react';
 import AddPlaylistDialog from './AddPlaylistDialog';
+import { getApiUrl } from '@/lib/config';
 
 interface Playlist {
   id: number;
@@ -45,7 +46,18 @@ const AddToPlaylistButton: React.FC<AddToPlaylistButtonProps> = ({
     
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:4000/api/playlists');
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(getApiUrl('/api/playlists'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch playlists');
@@ -68,10 +80,24 @@ const AddToPlaylistButton: React.FC<AddToPlaylistButtonProps> = ({
   const addToPlaylist = async (playlistId: number, playlistName: string) => {
     setIsAddingToPlaylist(true);
     try {
-      const response = await fetch(`http://localhost:4000/api/playlists/${playlistId}/songs`, {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      console.log('Adding song to playlist:', {
+        playlistId,
+        playlistName,
+        trackId,
+        songId: Number(trackId)
+      });
+
+      const response = await fetch(getApiUrl(`/api/playlists/${playlistId}/songs`), {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify({
           songId: Number(trackId),
@@ -80,6 +106,12 @@ const AddToPlaylistButton: React.FC<AddToPlaylistButtonProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        
         if (response.status === 409) {
           // Song already in playlist
           toast({

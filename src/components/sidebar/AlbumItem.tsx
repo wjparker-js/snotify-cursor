@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getApiUrl } from '@/lib/config';
+import { useImageCache } from '@/hooks/use-image-cache';
 
 interface AlbumItemProps {
   album: {
@@ -10,45 +12,14 @@ interface AlbumItemProps {
   };
 }
 
-const getAlbumImageUrl = (image_url: string | null | undefined) => {
-  if (!image_url) return '/placeholder.svg';
-  // If the image_url is an absolute URL (http/https), use as is
-  if (/^https?:\/\//i.test(image_url)) return image_url;
-  // Otherwise, treat as relative and prefix with backend uploads URL
-  return `http://localhost:4000/uploads/${image_url.replace(/^\/+|\\+/g, '')}`;
-};
-
 const AlbumItem: React.FC<AlbumItemProps> = ({ album }) => {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [displayImageSrc, setDisplayImageSrc] = useState('/placeholder.svg');
-  
-  // Use the album's image_url field directly, with fallback to cover endpoint
-  const imageUrl = !imageError && album.image_url 
-    ? getAlbumImageUrl(album.image_url)
-    : album.id 
-      ? `http://localhost:4000/api/albums/${album.id}/cover`
-      : '/placeholder.svg';
+  // Always use the API endpoint for consistency
+  const imageUrl = album.id 
+    ? getApiUrl(`/api/albums/${album.id}/cover`)
+    : '/placeholder.svg';
 
-  // Preload the image and set display src only when loaded
-  useEffect(() => {
-    if (imageUrl && imageUrl !== '/placeholder.svg') {
-      const img = new Image();
-      img.onload = () => {
-        setDisplayImageSrc(imageUrl);
-        setImageLoaded(true);
-      };
-      img.onerror = () => {
-        setImageError(true);
-        setDisplayImageSrc('/placeholder.svg');
-        setImageLoaded(true);
-      };
-      img.src = imageUrl;
-    } else {
-      setDisplayImageSrc('/placeholder.svg');
-      setImageLoaded(true);
-    }
-  }, [imageUrl]);
+  // Use the image cache hook for better performance
+  const { imageUrl: cachedImageUrl, isLoading: imageLoading, error: imageError } = useImageCache(imageUrl);
 
   return (
     <Link 
@@ -56,16 +27,16 @@ const AlbumItem: React.FC<AlbumItemProps> = ({ album }) => {
       className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
     >
       <div className="relative flex-shrink-0" style={{ width: 40, height: 40 }}>
-        {!imageLoaded && (
+        {imageLoading && (
           <div className="absolute inset-0 bg-muted rounded flex items-center justify-center">
             <div className="w-4 h-4 bg-muted-foreground/20 rounded"></div>
           </div>
         )}
         <img
-          src={displayImageSrc}
+          src={cachedImageUrl}
           alt={album.title}
           className={`object-cover rounded transition-opacity duration-200 ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
+            !imageLoading ? 'opacity-100' : 'opacity-0'
           }`}
           style={{ width: 40, height: 40 }}
           loading="eager"

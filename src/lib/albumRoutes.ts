@@ -84,8 +84,7 @@ const trackStorage = multer.diskStorage({
 });
 const trackUpload = multer({ storage: trackStorage });
 
-// Add endpoints for album cover blob upload and serving
-const upload2 = multer(); // memory storage for blob
+
 
 // GET /api/albums - fetch all albums
 router.get('/', async (req: Request, res: Response) => {
@@ -271,31 +270,104 @@ router.get('/:albumId/tracks', async (req, res) => {
   }
 });
 
-// POST /api/albums/:id/cover - upload and store album cover as blob
-router.post('/:id/cover', upload2.single('cover'), async (req, res) => {
+// Multer storage config specifically for cover updates
+const coverUpdateStorage = multer.diskStorage({
+  destination: async (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+    try {
+      const albumId = parseInt(req.params.id, 10);
+      if (isNaN(albumId)) {
+        return cb(new Error('Invalid album ID'), '');
+      }
+      
+      // Fetch album to get the title
+      const album = await prisma.album.findUnique({ where: { id: albumId } });
+      if (!album) {
+        return cb(new Error('Album not found'), '');
+      }
+      
+      const sanitizedTitle = sanitizeFolderName(album.title);
+      const albumDir = path.join(UPLOADS_BASE_PATH, 'albums', sanitizedTitle);
+      fs.mkdirSync(albumDir, { recursive: true });
+      cb(null, albumDir);
+    } catch (error) {
+      cb(error as Error, '');
+    }
+  },
+  filename: (req: MulterRequest, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+    const ext = path.extname(file.originalname);
+    cb(null, 'cover' + ext);
+  },
+});
+const coverUpload = multer({ storage: coverUpdateStorage });
+
+// POST /api/albums/:id/cover - upload and store album cover as file
+router.post('/:id/cover', coverUpload.single('cover'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const albumId = parseInt(req.params.id, 10);
     if (isNaN(albumId)) return res.status(400).json({ error: 'Invalid album id' });
-    const album = await prisma.album.update({
+    
+    // Get album to construct the proper image_url path
+    const album = await prisma.album.findUnique({ where: { id: albumId } });
+    if (!album) return res.status(404).json({ error: 'Album not found' });
+    
+    const sanitizedTitle = sanitizeFolderName(album.title);
+    const image_url = `albums/${sanitizedTitle}/${req.file.filename}`;
+    
+    // Update the album with the new image_url and clear any old cover_blob
+    const updatedAlbum = await prisma.album.update({
       where: { id: albumId },
-      data: { cover_blob: req.file.buffer },
+      data: { 
+        image_url: image_url,
+        cover_blob: null // Clear blob data since we're using file-based storage
+      },
     });
-    res.json({ success: true, album });
+    
+    res.json({ success: true, album: updatedAlbum });
   } catch (error) {
     res.status(500).json({ error: error.message || 'Failed to upload cover' });
   }
 });
 
-// GET /api/albums/:id/cover - serve the album cover image blob
+// GET /api/albums/:id/cover - serve the album cover image from file system
 router.get('/:id/cover', async (req, res) => {
   try {
     const albumId = parseInt(req.params.id, 10);
     if (isNaN(albumId)) return res.status(400).send('Invalid album id');
+    
     const album = await prisma.album.findUnique({ where: { id: albumId } });
-    if (!album || !album.cover_blob) return res.status(404).send('No cover image');
-    res.set('Content-Type', 'image/jpeg');
-    res.send(Buffer.from(album.cover_blob));
+    if (!album) return res.status(404).send('Album not found');
+    
+    // Set cache headers for better performance
+    res.set({
+      'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
+      'ETag': `"album-${albumId}-${album.updatedAt.getTime()}"`,
+      'Last-Modified': album.updatedAt.toUTCString()
+    });
+    
+    // Check if client has cached version
+    const ifNoneMatch = req.headers['if-none-match'];
+    const etag = `"album-${albumId}-${album.updatedAt.getTime()}"`;
+    if (ifNoneMatch === etag) {
+      return res.status(304).send(); // Not modified
+    }
+    
+    // If we have image_url, serve the file
+    if (album.image_url && !album.image_url.startsWith('http')) {
+      const filePath = path.join(UPLOADS_BASE_PATH, album.image_url);
+      if (fs.existsSync(filePath)) {
+        return res.sendFile(path.resolve(filePath));
+      }
+    }
+    
+    // Fallback to blob if it exists (for legacy data)
+    if (album.cover_blob) {
+      res.set('Content-Type', 'image/jpeg');
+      return res.send(Buffer.from(album.cover_blob));
+    }
+    
+    // No cover found
+    return res.status(404).send('No cover image');
   } catch (error) {
     res.status(500).send('Failed to fetch cover image');
   }

@@ -39,10 +39,29 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onPlayTrack, isAdmin }) =
     });
   };
 
-  const handleDeleteTrack = (track: Track) => {
-    // Placeholder: Implement admin delete logic
-    // eslint-disable-next-line no-console
-    console.log('Delete track', track.id);
+  const handleDeleteTrack = async (track: Track) => {
+    if (!confirm(`Are you sure you want to delete "${track.title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:4000/api/songs/${track.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete track');
+      }
+
+      // Refresh the page or notify parent component to update the track list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting track:', error);
+      alert('Failed to delete track. Please try again.');
+    }
   };
 
   if (!tracks || tracks.length === 0) {

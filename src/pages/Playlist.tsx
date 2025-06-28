@@ -3,20 +3,51 @@ import { useParams } from 'react-router-dom';
 import AlbumHeader from '@/components/album/AlbumHeader';
 import TrackList from '@/components/shared/TrackList';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { getUploadsUrl, getApiUrl } from '@/lib/config';
 
 // TODO: Implement single playlist functionality using MySQL/Prisma. Supabase logic removed.
 
 const PLAYLIST_COVER_IMAGE = 'https://images-na.ssl-images-amazon.com/images/I/91rO1rQ1HLL.jpg'; // Use the provided album covers image
 
+interface PlaylistSong {
+  id: number;
+  song: {
+    id: number;
+    title: string;
+    artist: string;
+    duration?: number;
+    url?: string;
+    albumId?: number;
+  };
+}
+
+interface Playlist {
+  id: number;
+  name: string;
+  description?: string;
+  cover_image_url?: string;
+  user?: { name: string };
+  playlistsong?: PlaylistSong[];
+}
+
 const Playlist: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [playlist, setPlaylist] = useState<any>(null);
-  const [tracks, setTracks] = useState<any[]>([]);
+  const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const tracks = playlist?.playlistsong?.map((ps, index) => ({
+    id: ps.song.id,
+    title: ps.song.title,
+    artist: ps.song.artist,
+    duration: ps.song.duration || 0,
+    audioUrl: ps.song.url ? getUploadsUrl(ps.song.url) : '',
+    albumArt: ps.song.albumId ? getApiUrl(`/api/albums/${ps.song.albumId}/cover`) : '/placeholder.svg',
+    position: index + 1,
+  })) || [];
 
   useEffect(() => {
     if (!id) return;
@@ -24,18 +55,12 @@ const Playlist: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:4000/api/playlists/${id}`);
+        const response = await fetch(getApiUrl(`/api/playlists/${id}`));
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch playlist');
         setPlaylist(data);
-        setTracks(data.playlistsong?.map((ps: any, idx: number) => ({
-          ...ps.song,
-          track_number: idx + 1,
-          audioUrl: ps.song.url ? `http://localhost:4000/uploads/${ps.song.url.replace(/^\/+/, '')}` : '',
-          albumArt: `http://localhost:4000/api/albums/${ps.song.albumId}/cover`
-        })) || []);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch playlist');
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
@@ -43,17 +68,17 @@ const Playlist: React.FC = () => {
     fetchPlaylist();
   }, [id]);
 
-  const coverUrl = id ? `http://localhost:4000/api/playlists/${id}/cover?${Date.now()}` : '/placeholder.svg';
+  const coverUrl = id ? getApiUrl(`/api/playlists/${id}/cover?${Date.now()}`) : '/placeholder.svg';
 
-  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!fileInputRef.current?.files?.[0] || !id) return;
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !id) return;
     setUploading(true);
     setError(null);
     const formData = new FormData();
-    formData.append('cover', fileInputRef.current.files[0]);
+    formData.append('cover', file);
     try {
-      const response = await fetch(`http://localhost:4000/api/playlists/${id}/cover`, {
+      const response = await fetch(getApiUrl(`/api/playlists/${id}/cover`), {
         method: 'POST',
         body: formData,
       });
@@ -76,7 +101,7 @@ const Playlist: React.FC = () => {
       <AlbumHeader
         image={coverUrl}
         title={playlist.name}
-        artist={playlist.user?.name || playlist.owner || 'Unknown'}
+        artist={playlist.user?.name || 'Unknown'}
         year={''}
         trackCount={tracks.length.toString()}
         duration={''}
@@ -89,8 +114,8 @@ const Playlist: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Upload Playlist Cover</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleUpload} className="flex flex-col gap-4">
-            <input type="file" accept="image/*" ref={fileInputRef} className="border rounded p-1" />
+          <form onSubmit={(e) => { e.preventDefault(); handleUpload(e as React.ChangeEvent<HTMLInputElement>); }} className="flex flex-col gap-4">
+            <input type="file" accept="image/*" ref={fileInputRef} className="border rounded p-1" onChange={handleUpload} />
             {error && <div className="text-red-500 text-center">{error}</div>}
             <DialogFooter>
               <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded" disabled={uploading}>{uploading ? 'Uploading...' : 'Upload Cover'}</button>

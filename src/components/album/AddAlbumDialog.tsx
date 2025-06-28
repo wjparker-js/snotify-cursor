@@ -81,6 +81,9 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
 
       const response = await fetch('/api/albums', {
         method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: formData
       });
       if (!response.ok) {
@@ -95,6 +98,9 @@ const AddAlbumDialog: React.FC<AddAlbumDialogProps> = ({ children, onAlbumAdded 
         coverFormData.append('cover', imageFile);
         const coverResponse = await fetch(`http://localhost:4000/api/albums/${album.id}/cover`, {
           method: 'POST',
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          },
           body: coverFormData
         });
         if (!coverResponse.ok) {

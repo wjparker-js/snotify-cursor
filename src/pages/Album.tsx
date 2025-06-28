@@ -1,10 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import AlbumHeader from '@/components/album/AlbumHeader';
-import TrackList from '@/components/shared/TrackList';
-import { toast } from '@/hooks/use-toast';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { PlayCircle, PauseCircle, Heart, MoreHorizontal, ChevronLeft } from 'lucide-react';
+import { TrackList } from '@/components/albums/TrackList';
+import { AlbumHeader } from '@/components/albums/AlbumHeader';
 import AlbumActions from '@/components/album/AlbumActions';
+import AddTrackDialog from '@/components/album/AddTrackDialog';
+import AlbumNotFound from '@/components/album/AlbumNotFound';
 import RelatedAlbums from '@/components/album/RelatedAlbums';
+import { useMobileResponsive } from '@/hooks/use-mobile-responsive';
+import { useAlbumData } from '@/hooks/use-album-data';
+import { toast } from '@/components/ui/use-toast';
+import { getUploadsUrl, getApiUrl } from '@/lib/config';
 import Player from '@/components/player/AudioPlayer';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
@@ -32,7 +41,11 @@ const Album: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:4000/api/albums/${id}`);
+        const response = await fetch(getApiUrl(`/api/albums/${id}`), {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch album');
         setAlbum(data);
@@ -52,7 +65,11 @@ const Album: React.FC = () => {
       setTracksLoading(true);
       setTracksError(null);
       try {
-        const response = await fetch(`http://localhost:4000/api/albums/${id}/tracks`);
+        const response = await fetch(getApiUrl(`/api/albums/${id}/tracks`), {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch tracks');
         setTracks(data);
@@ -72,7 +89,11 @@ const Album: React.FC = () => {
       setRelatedLoading(true);
       setRelatedError(null);
       try {
-        const response = await fetch(`http://localhost:4000/api/albums?artist=${encodeURIComponent(album.artist)}`);
+        const response = await fetch(getApiUrl(`/api/albums?artist=${encodeURIComponent(album.artist)}`), {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch related albums');
         // Exclude the current album from related
@@ -89,22 +110,15 @@ const Album: React.FC = () => {
   const getTrackAudioUrl = (audio_path: string | null | undefined) => {
     if (!audio_path) return '';
     if (/^https?:\/\//i.test(audio_path)) return audio_path;
-    return `http://localhost:4000/uploads/${audio_path.replace(/^\/+|\\+/g, '')}`;
+    return getUploadsUrl(audio_path);
   };
 
-  const getAlbumImageUrl = (image_url: string | null | undefined) => {
-    if (!image_url) return '/placeholder.svg';
-    // If the image_url is an absolute URL (http/https), use as is
-    if (/^https?:\/\//i.test(image_url)) return image_url;
-    // Otherwise, treat as relative and prefix with backend uploads URL
-    return `http://localhost:4000/uploads/${image_url.replace(/^\/+|\\+/g, '')}`;
+  const getAlbumCoverUrl = () => {
+    if (!id) return '/placeholder.svg';
+    return getApiUrl(`/api/albums/${id}/cover?${Date.now()}`);
   };
 
-  const coverUrl = album?.image_url 
-    ? getAlbumImageUrl(album.image_url)
-    : id 
-      ? `http://localhost:4000/api/albums/${id}/cover?${Date.now()}` 
-      : '/placeholder.svg';
+  const coverUrl = getAlbumCoverUrl();
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -114,8 +128,11 @@ const Album: React.FC = () => {
     const formData = new FormData();
     formData.append('cover', fileInputRef.current.files[0]);
     try {
-      const response = await fetch(`http://localhost:4000/api/albums/${id}/cover`, {
+      const response = await fetch(getApiUrl(`/api/albums/${id}/cover`), {
         method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: formData,
       });
       if (!response.ok) throw new Error('Upload failed');

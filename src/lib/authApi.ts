@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = '7d';
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
 
@@ -65,7 +65,7 @@ export function verifyJWT(token: string) {
   }
 }
 
-export async function createRefreshToken(userId: string) {
+export async function createRefreshToken(userId: number) {
   const token = uuidv4();
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000);
   await prisma.refreshtoken.create({
@@ -73,8 +73,7 @@ export async function createRefreshToken(userId: string) {
       token, 
       userId, 
       expiresAt,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date()
     },
   });
   return token;
@@ -128,7 +127,7 @@ export async function verifyEmail(token: string) {
   return { message: 'Email verified' };
 }
 
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: number) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -147,9 +146,9 @@ export async function getUserProfile(userId: string) {
   return user;
 }
 
-export async function updateUserProfile(userId: string, data: any) {
+export async function updateUserProfile(userId: number, data: any) {
   const allowedFields = ['email', 'name', 'avatar', 'bio', 'preferences'];
-  const updateData = {};
+  const updateData: any = {};
   for (const key of allowedFields) {
     if (data[key] !== undefined) updateData[key] = data[key];
   }
@@ -173,7 +172,7 @@ export async function updateUserProfile(userId: string, data: any) {
   return user;
 }
 
-export async function deactivateUser(userId: string) {
+export async function deactivateUser(userId: number) {
   // Soft delete: set email to null and deactivate account
   const user = await prisma.user.update({
     where: { id: userId },
@@ -183,7 +182,7 @@ export async function deactivateUser(userId: string) {
   return { message: 'Account deactivated' };
 }
 
-export async function getUserTenants(userId: string) {
+export async function getUserTenants(userId: number) {
   const userTenants = await prisma.usertenant.findMany({
     where: { userId },
     include: { tenant: true },
@@ -191,7 +190,7 @@ export async function getUserTenants(userId: string) {
   return userTenants.map(ut => ({ id: ut.tenant.id, name: ut.tenant.name, role: ut.role }));
 }
 
-export async function switchUserTenant(userId: string, tenantId: string) {
+export async function switchUserTenant(userId: number, tenantId: number) {
   // Check if user belongs to tenant
   const userTenant = await prisma.usertenant.findFirst({ where: { userId, tenantId } });
   if (!userTenant) throw new Error('User does not belong to this tenant');

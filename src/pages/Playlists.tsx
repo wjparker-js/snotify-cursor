@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { PlaylistGrid } from '@/components/playlists/PlaylistGrid';
 import AddPlaylistDialog from '@/components/playlist/AddPlaylistDialog';
 import { useMobileResponsive } from '@/hooks/use-mobile-responsive';
+import { useAuth } from '@/context/AuthContext';
+import { getApiUrl } from '@/lib/config';
 
 // TODO: Implement playlist fetching and management using MySQL/Prisma. Supabase logic removed.
 
@@ -12,19 +14,32 @@ const Playlists: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isMobile } = useMobileResponsive();
+  const { user } = useAuth();
+
+  // Helper function to get auth headers
+      const getAuthHeaders = () => {
+      const token = localStorage.getItem('jwt');
+      return {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      };
+    };
 
   useEffect(() => {
     const fetchPlaylists = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('http://localhost:4000/api/playlists');
+        const response = await fetch(getApiUrl('/api/playlists'), {
+          headers: getAuthHeaders()
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch playlists');
         // Use the blob endpoint for the cover image
         const mapped = data.map((playlist: any) => ({
           ...playlist,
-          cover: `http://localhost:4000/api/playlists/${playlist.id}/cover`,
+          cover: getApiUrl(`/api/playlists/${playlist.id}/cover`),
           title: playlist.name,
           owner: playlist.user?.name || 'Unknown',
         }));
@@ -35,8 +50,15 @@ const Playlists: React.FC = () => {
         setIsLoading(false);
       }
     };
-    fetchPlaylists();
-  }, []);
+
+    // Only fetch playlists if user is authenticated
+    if (user) {
+      fetchPlaylists();
+    } else {
+      setIsLoading(false);
+      setError('Please sign in to view your playlists');
+    }
+  }, [user]);
 
   const handlePlaylistAdded = () => {
     // Refresh playlists after adding a new one
@@ -44,12 +66,14 @@ const Playlists: React.FC = () => {
     setIsLoading(true);
     const fetchPlaylists = async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/playlists');
+        const response = await fetch(getApiUrl('/api/playlists'), {
+          headers: getAuthHeaders()
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch playlists');
         const mapped = data.map((playlist: any) => ({
           ...playlist,
-          cover: `http://localhost:4000/api/playlists/${playlist.id}/cover`,
+          cover: getApiUrl(`/api/playlists/${playlist.id}/cover`),
           title: playlist.name,
           owner: playlist.user?.name || 'Unknown',
         }));
@@ -72,7 +96,7 @@ const Playlists: React.FC = () => {
       <div className="flex items-center justify-between mb-6 w-full max-w-6xl">
         <h1 className="text-2xl font-bold">Playlists</h1>
         <div className="flex items-center gap-2">
-          <AddPlaylistDialog onPlaylistAdded={handlePlaylistAdded} />
+          {user && <AddPlaylistDialog onPlaylistAdded={handlePlaylistAdded} />}
         </div>
       </div>
       

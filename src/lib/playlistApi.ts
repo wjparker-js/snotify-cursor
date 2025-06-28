@@ -21,6 +21,21 @@ export async function getPlaylists() {
   });
 }
 
+export async function getPlaylistsByUserId(userId: number) {
+  return await prisma.playlist.findMany({
+    where: { userId },
+    include: {
+      user: true,
+      playlistsong: {
+        include: {
+          song: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
 export async function getPlaylistById(playlistId: string | number) {
   return await prisma.playlist.findUnique({
     where: { id: Number(playlistId) },
@@ -35,7 +50,7 @@ export async function getPlaylistById(playlistId: string | number) {
   });
 }
 
-export async function createPlaylist(name: string, description: string = '', userId: number = 1) {
+export async function createPlaylist(name: string, description: string = '', userId: number = 4) {
   return await prisma.playlist.create({
     data: {
       name,
@@ -92,11 +107,23 @@ export async function setPlaylistCoverBlob(playlistId: string | number, buffer: 
 }
 
 export async function addSongToPlaylist(playlistId: string | number, songId: string | number) {
+  const playlistIdNum = Number(playlistId);
+  const songIdNum = Number(songId);
+  
+  // Validate that the song exists
+  const song = await prisma.song.findUnique({
+    where: { id: songIdNum }
+  });
+  
+  if (!song) {
+    throw new Error('Song not found');
+  }
+  
   // Check if song is already in playlist to prevent duplicates
   const existing = await prisma.playlistsong.findFirst({
     where: {
-      playlistId: Number(playlistId),
-      songId: Number(songId),
+      playlistId: playlistIdNum,
+      songId: songIdNum,
     },
   });
   
@@ -107,8 +134,8 @@ export async function addSongToPlaylist(playlistId: string | number, songId: str
   // Add song to playlist
   await prisma.playlistsong.create({
     data: {
-      playlistId: Number(playlistId),
-      songId: Number(songId),
+      playlistId: playlistIdNum,
+      songId: songIdNum,
     },
   });
   

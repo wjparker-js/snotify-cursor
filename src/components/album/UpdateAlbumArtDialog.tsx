@@ -65,6 +65,9 @@ const UpdateAlbumArtDialog: React.FC<UpdateAlbumArtDialogProps> = ({
       formData.append('cover', imageFile);
       const response = await fetch(`http://localhost:4000/api/albums/${albumId}/cover`, {
         method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: formData,
       });
       if (!response.ok) {

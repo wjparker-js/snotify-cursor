@@ -50,6 +50,9 @@ const AddTrackDialog: React.FC<AddTrackDialogProps> = ({
 
       const response = await fetch(`http://localhost:4000/api/albums/${albumId}/tracks`, {
         method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: formData
       });
       if (!response.ok) {

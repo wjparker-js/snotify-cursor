@@ -59,6 +59,12 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      // Don't capture keyboard shortcuts when user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
       // Space bar for play/pause
       if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();

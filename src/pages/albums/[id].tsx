@@ -5,6 +5,7 @@ import TrackList from '@/components/shared/TrackList';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getApiUrl } from '@/lib/config';
 
 const AlbumDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,7 +38,11 @@ const AlbumDetailsPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:4000/api/albums/${id}`);
+        const response = await fetch(getApiUrl(`/api/albums/${id}`), {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch album');
         setAlbum(data);
@@ -56,7 +61,11 @@ const AlbumDetailsPage: React.FC = () => {
       setTracksLoading(true);
       setTracksError(null);
       try {
-        const response = await fetch(`http://localhost:4000/api/songs/album/${id}`);
+        const response = await fetch(getApiUrl(`/api/songs/album/${id}`), {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch tracks');
         setTracks(data);
@@ -77,8 +86,11 @@ const AlbumDetailsPage: React.FC = () => {
     const formData = new FormData();
     formData.append('cover', fileInputRef.current.files[0]);
     try {
-      const response = await fetch(`http://localhost:4000/api/albums/${id}/cover`, {
+      const response = await fetch(getApiUrl(`/api/albums/${id}/cover`), {
         method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: formData,
       });
       if (!response.ok) throw new Error('Upload failed');
@@ -131,8 +143,11 @@ const AlbumDetailsPage: React.FC = () => {
     // Duration is now auto-detected by the backend, no need to send it
     formData.append('audio', audioFile);
     try {
-      const response = await fetch(`http://localhost:4000/api/albums/${id}/tracks`, {
+      const response = await fetch(getApiUrl(`/api/albums/${id}/tracks`), {
         method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: formData,
       });
       if (!response.ok) throw new Error('Upload failed');
@@ -164,7 +179,7 @@ const AlbumDetailsPage: React.FC = () => {
       track_number: track.track_number || track.number || 0,
       audioUrl: track.url ? `/uploads/${track.url.replace(/^\/+/, '')}` : '',
       album: album?.title || '',
-      albumArt: album ? `http://localhost:4000/api/albums/${album.id}/cover` : '',
+      albumArt: album ? getApiUrl(`/api/albums/${album.id}/cover`) : '',
     })),
     [tracks, album]
   );
@@ -189,7 +204,7 @@ const AlbumDetailsPage: React.FC = () => {
     <div className="flex min-h-screen bg-bg">
       <main className="flex-1 p-8 overflow-y-auto">
         <AlbumHeader
-          image={`http://localhost:4000/api/albums/${id}/cover?${Date.now()}`}
+          image={getApiUrl(`/api/albums/${id}/cover?${Date.now()}`)}
           title={album.title}
           artist={album.artist}
           year={album.year}

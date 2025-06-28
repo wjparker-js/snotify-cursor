@@ -278,10 +278,7 @@
   }
 
   .mobile-card-image {
-    width: 139px !important; /* 20% smaller than 174px */
-    height: 139px !important;
-    max-width: 139px !important;
-    max-height: 139px !important;
+    /* Removed fixed dimensions to allow responsive sizing */
     object-fit: cover !important;
   }
 

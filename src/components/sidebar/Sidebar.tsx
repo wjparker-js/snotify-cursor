@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Disc, ListMusic } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { getApiUrl } from '@/lib/config';
 
 interface Album {
   id: number;
@@ -23,6 +25,7 @@ const Sidebar: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   // Set active tab based on current route
   useEffect(() => {
@@ -33,10 +36,24 @@ const Sidebar: React.FC = () => {
     }
   }, [location.pathname]);
 
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('jwt');
+    return {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+  };
+
   // Fetch albums data
   const fetchAlbums = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/albums');
+      const response = await fetch(getApiUrl('/api/albums'), {
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
       const data = await response.json();
       if (response.ok) {
         setAlbums(data);
@@ -49,17 +66,29 @@ const Sidebar: React.FC = () => {
   // Fetch playlists data
   const fetchPlaylists = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/playlists');
+      // Only fetch playlists if user is authenticated
+      if (!user) {
+        setPlaylists([]);
+        return;
+      }
+
+      const response = await fetch(getApiUrl('/api/playlists'), {
+        headers: getAuthHeaders()
+      });
       const data = await response.json();
       if (response.ok) {
         setPlaylists(data);
+      } else {
+        console.error('Failed to fetch playlists:', data.error);
+        setPlaylists([]);
       }
     } catch (error) {
       console.error('Failed to fetch playlists:', error);
+      setPlaylists([]);
     }
   };
 
-  // Load data on component mount
+  // Load data on component mount and when user changes
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -67,7 +96,7 @@ const Sidebar: React.FC = () => {
       setIsLoading(false);
     };
     loadData();
-  }, []);
+  }, [user]);
 
   const handleTabChange = (tab: 'albums' | 'playlists') => {
     setActiveTab(tab);
@@ -88,11 +117,11 @@ const Sidebar: React.FC = () => {
   };
 
   const getAlbumCoverUrl = (albumId: number) => {
-    return `http://localhost:4000/api/albums/${albumId}/cover`;
+    return getApiUrl(`/api/albums/${albumId}/cover`);
   };
 
   const getPlaylistCoverUrl = (playlistId: number) => {
-    return `http://localhost:4000/api/playlists/${playlistId}/cover`;
+    return getApiUrl(`/api/playlists/${playlistId}/cover`);
   };
 
   if (isLoading) {

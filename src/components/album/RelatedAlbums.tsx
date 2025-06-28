@@ -1,36 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { getApiUrl } from '@/lib/config';
 
 interface Album {
   id: number;
   title: string;
   artist: string;
+  year?: number;
   image_url?: string;
 }
 
 interface RelatedAlbumsProps {
   albums: Album[];
+  artist: string;
 }
 
-const getAlbumImageUrl = (image_url: string | null | undefined) => {
-  if (!image_url) return '/placeholder.svg';
-  // If the image_url is an absolute URL (http/https), use as is
-  if (/^https?:\/\//i.test(image_url)) return image_url;
-  // Otherwise, treat as relative and prefix with backend uploads URL
-  return `http://localhost:4000/uploads/${image_url.replace(/^\/+|\\+/g, '')}`;
-};
-
 const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
-  const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [displayImageSrc, setDisplayImageSrc] = useState('/placeholder.svg');
   
-  // Use the album's image_url field directly, with fallback to cover endpoint
-  const imageUrl = !imageError && album.image_url 
-    ? getAlbumImageUrl(album.image_url)
-    : album.id 
-      ? `http://localhost:4000/api/albums/${album.id}/cover`
-      : '/placeholder.svg';
+  // Always use the API endpoint for consistency
+  const imageUrl = album.id 
+    ? getApiUrl(`/api/albums/${album.id}/cover`)
+    : '/placeholder.svg';
 
   // Preload the image and set display src only when loaded
   useEffect(() => {
@@ -41,7 +34,6 @@ const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
         setImageLoaded(true);
       };
       img.onerror = () => {
-        setImageError(true);
         setDisplayImageSrc('/placeholder.svg');
         setImageLoaded(true);
       };

@@ -11,14 +11,31 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     allowedHosts: [
       '46f1-216-212-41-79.ngrok-free.app',
+      "a335-216-212-41-79.ngrok-free.app",
     ],
     hmr: {
       timeout: 120000,
+    },
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, ngrok-skip-browser-warning',
     },
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
         changeOrigin: true,
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      },
+      '/uploads': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
       },
     },
   },

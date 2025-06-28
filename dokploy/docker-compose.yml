@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # Main Snotify application
+  app:
+    build:
+      context: ..
+      dockerfile: dokploy/Dockerfile
+    container_name: snotify-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - ../uploads:/app/uploads:rw
+      - app_logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - snotify-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.snotify.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.snotify.entrypoints=websecure"
+      - "traefik.http.routers.snotify.tls.certresolver=letsencrypt"
+      - "traefik.http.services.snotify.loadbalancer.server.port=4000"
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: snotify-mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=snotify
+      - MYSQL_USER=snotify
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_CHARSET=utf8mb4
+      - MYSQL_COLLATION=utf8mb4_unicode_ci
+    ports:
+      - "127.0.0.1:3306:3306"  # Only accessible locally
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - mysql_logs:/var/log/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - snotify-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Reverse Proxy with SSL
+  traefik:
+    image: traefik:v3.0
+    container_name: snotify-traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--global.sendanonymoususage=false"
+      # Redirect HTTP to HTTPS
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:8080:8080"  # Traefik dashboard (local only)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - snotify-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.service=api@internal"
+
+  # Redis for caching (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: snotify-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "127.0.0.1:6379:6379"  # Only accessible locally
+    volumes:
+      - redis_data:/data
+    networks:
+      - snotify-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 10s
+
+  # Backup service (runs daily)
+  backup:
+    image: alpine:latest
+    container_name: snotify-backup
+    restart: "no"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/mysql_data:ro
+      - ../uploads:/uploads:ro
+      - backup_data:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    networks:
+      - snotify-network
+    depends_on:
+      - mysql
+    command: |
+      sh -c "
+        apk add --no-cache mysql-client tar gzip &&
+        echo '0 2 * * * /backup.sh' | crontab - &&
+        crond -f
+      "
+
+networks:
+  snotify-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  mysql_logs:
+    driver: local
+  app_logs:
+    driver: local
+  traefik_letsencrypt:
+    driver: local
+  redis_data:
+    driver: local
+  backup_data:
+    driver: local 

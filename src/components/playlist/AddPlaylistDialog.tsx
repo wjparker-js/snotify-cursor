@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Upload, ImageIcon } from 'lucide-react';
 import * as z from 'zod';
+import { getApiUrl } from '@/lib/config';
 
 const playlistFormSchema = z.object({
   name: z.string().min(1, 'Playlist name is required').max(100, 'Playlist name must be 100 characters or less'),
@@ -88,8 +89,17 @@ const AddPlaylistDialog: React.FC<AddPlaylistDialogProps> = ({ children, onPlayl
         formData.append('image', selectedImage);
       }
 
-      const response = await fetch('http://localhost:4000/api/playlists', {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('Authentication required to create playlist');
+      }
+
+      const response = await fetch(getApiUrl('/api/playlists'), {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
         body: formData,
       });
 
